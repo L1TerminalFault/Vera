@@ -1,0 +1,4 @@
+/home/k/Projects/vera/build/CMakeFiles/vera.dir
+/home/k/Projects/vera/build/CMakeFiles/vera_example.dir
+/home/k/Projects/vera/build/CMakeFiles/edit_cache.dir
+/home/k/Projects/vera/build/CMakeFiles/rebuild_cache.dir

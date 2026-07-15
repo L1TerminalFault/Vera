@@ -1,0 +1,32 @@
+[
+{
+  "directory": "/home/k/Projects/vera/build",
+  "command": "/usr/bin/c++ -DVERA_PLATFORM_LINUX -I/home/k/Projects/vera/src -std=c++23 -Wall -Wextra -Werror -o CMakeFiles/vera.dir/src/core/window/window.cpp.o -c /home/k/Projects/vera/src/core/window/window.cpp",
+  "file": "/home/k/Projects/vera/src/core/window/window.cpp",
+  "output": "CMakeFiles/vera.dir/src/core/window/window.cpp.o"
+},
+{
+  "directory": "/home/k/Projects/vera/build",
+  "command": "/usr/bin/c++ -DVERA_PLATFORM_LINUX -I/home/k/Projects/vera/src -std=c++23 -Wall -Wextra -Werror -o CMakeFiles/vera.dir/src/platform/window/vera_wayland.cpp.o -c /home/k/Projects/vera/src/platform/window/vera_wayland.cpp",
+  "file": "/home/k/Projects/vera/src/platform/window/vera_wayland.cpp",
+  "output": "CMakeFiles/vera.dir/src/platform/window/vera_wayland.cpp.o"
+},
+{
+  "directory": "/home/k/Projects/vera/build",
+  "command": "/usr/bin/c++ -DVERA_PLATFORM_LINUX -I/home/k/Projects/vera/src -std=c++23 -Wall -Wextra -Werror -o CMakeFiles/vera.dir/src/platform/window/vera_win32.cpp.o -c /home/k/Projects/vera/src/platform/window/vera_win32.cpp",
+  "file": "/home/k/Projects/vera/src/platform/window/vera_win32.cpp",
+  "output": "CMakeFiles/vera.dir/src/platform/window/vera_win32.cpp.o"
+},
+{
+  "directory": "/home/k/Projects/vera/build",
+  "command": "/usr/bin/c++ -DVERA_PLATFORM_LINUX -I/home/k/Projects/vera/src -std=c++23 -Wall -Wextra -Werror -o CMakeFiles/vera.dir/src/platform/window/vera_x11.cpp.o -c /home/k/Projects/vera/src/platform/window/vera_x11.cpp",
+  "file": "/home/k/Projects/vera/src/platform/window/vera_x11.cpp",
+  "output": "CMakeFiles/vera.dir/src/platform/window/vera_x11.cpp.o"
+},
+{
+  "directory": "/home/k/Projects/vera/build",
+  "command": "/usr/bin/c++  -I/home/k/Projects/vera/src -std=c++23 -o CMakeFiles/vera_example.dir/example/basic.cpp.o -c /home/k/Projects/vera/example/basic.cpp",
+  "file": "/home/k/Projects/vera/example/basic.cpp",
+  "output": "CMakeFiles/vera_example.dir/example/basic.cpp.o"
+}
+]

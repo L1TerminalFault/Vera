@@ -1,0 +1,4 @@
+# .clangd
+Diagnostics:
+  ClangTidy:
+    Add: [readability-identifier-naming, google-*]
