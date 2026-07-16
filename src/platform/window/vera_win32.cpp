@@ -624,10 +624,14 @@ void VeraWin32Window::close() {
 }
 
 void VeraWin32Window::focus() {
-    if (m_hwnd) {
-        SetForegroundWindow(m_hwnd);
-        SetFocus(m_hwnd);
+    if (!m_hwnd) return;
+
+    if (IsIconic(m_hwnd)) {
+        ShowWindow(m_hwnd, SW_RESTORE);
     }
+
+    SetForegroundWindow(m_hwnd);
+    SetFocus(m_hwnd);
 }
 
 void VeraWin32Window::setTitle(const std::string& title) {
