@@ -6,7 +6,7 @@
 #include "core/app/types.h"
 
 class VeraWindow {
-   private:
+   public:
     virtual ~VeraWindow() = default;
 
     virtual VeraWindowHandle getHandle() const = 0;

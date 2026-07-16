@@ -4,6 +4,7 @@
 enum class VeraErrorType {
     WindowCreationFailed,
     RemovedNonExistingWindow,
+    CreationFailed,
     DefaultError
 };
 
