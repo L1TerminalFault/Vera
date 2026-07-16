@@ -62,6 +62,8 @@ class VeraWin32Window : public VeraWindow {
     void setCursorShape(VeraCursorShape shape) override;
 
     VeraMonitorInfo getCurrentMonitor() const override;
+    void setDestroyedNotifier(
+        std::function<void(VeraWindowHandle)> notifier) override;
 
    private:
     VeraWindowHandle generateUniqueHandle();
@@ -108,7 +110,15 @@ class VeraWin32Window : public VeraWindow {
     VeraCursorShape m_cursor_shape = VeraCursorShape::Arrow;
     HCURSOR m_current_hcursor = nullptr;
 
+    void notifyDestroyed() {
+        if (m_destroyedNotifier) {
+            m_destroyedNotifier(getHandle());
+        }
+    }
+
     bool m_mouse_tracked = false;
+
+    std::function<void(VeraWindowHandle)> m_destroyedNotifier;
 };
 
 #endif

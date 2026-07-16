@@ -55,4 +55,5 @@ class VeraApp {
    private:
     VeraAppInfo m_appInfo;
     std::vector<std::unique_ptr<VeraWindow>> m_windows;
+    std::vector<VeraWindowHandle> m_pendingDestroyed;
 };

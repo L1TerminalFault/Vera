@@ -939,6 +939,7 @@ LRESULT VeraWin32Window::handleMessage(UINT msg, WPARAM wparam, LPARAM lparam) {
 
         case WM_DESTROY: {
             m_hwnd = nullptr;
+            notifyDestroyed();
             return 0;
         }
 
@@ -1137,3 +1138,8 @@ LRESULT VeraWin32Window::handleMessage(UINT msg, WPARAM wparam, LPARAM lparam) {
 
     return DefWindowProcW(m_hwnd, msg, wparam, lparam);
 }
+
+ void VeraWin32Window::setDestroyedNotifier(
+    std::function<void(VeraWindowHandle)> notifier) {
+    m_destroyedNotifier = std::move(notifier);
+ };

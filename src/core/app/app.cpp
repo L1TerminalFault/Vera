@@ -16,6 +16,12 @@ std::expected<VeraWindow*, VeraError> VeraApp::createWindow(
             VeraError{VeraErrorType::WindowCreationFailed, "Failed to create window"});
     }
 
+    VeraWindowHandle handle = window->getHandle();
+    window->setDestroyedNotifier([this, handle](VeraWindowHandle) {
+        m_pendingDestroyed.push_back(
+            handle);  
+    });
+
     VeraWindow* rawPtr = window.get();
     m_windows.push_back(std::move(window));
 
@@ -31,4 +37,11 @@ size_t VeraApp::getWindowCount() const { return m_windows.size(); }
 
 void VeraApp::pollEvents() {
     vera::internal::pollPlatformEvents();
+
+    for (VeraWindowHandle handle : m_pendingDestroyed) {
+        std::erase_if(m_windows, [handle](const auto& win) {
+            return win->getHandle() == handle;
+        });
+    }
+    m_pendingDestroyed.clear();
 }

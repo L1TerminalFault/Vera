@@ -61,4 +61,6 @@ class VeraWindow {
     virtual void setCursorShape(VeraCursorShape shape) = 0;
 
     virtual VeraMonitorInfo getCurrentMonitor() const = 0;
+    virtual void setDestroyedNotifier(
+        std::function<void(VeraWindowHandle)> notifier) = 0;
 };
