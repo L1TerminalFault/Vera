@@ -1,12 +1,9 @@
 #include "X11Cursor.hxx"
 
-namespace vera::x11::cursor {
+namespace cursor {
 
-using namespace core::input;
-using namespace internal;
-
-static std::unordered_map<VeraCursorShape, Cursor> g_shapeCache;
-static Cursor g_blankCursor = 0;
+static std::unordered_map<VeraCursorShape, Cursor> gShapeCache;
+static Cursor gBlankCursor = 0;
 
 static unsigned int shapeToFontGlyph(VeraCursorShape shape) {
     switch (shape) {
@@ -34,25 +31,25 @@ static unsigned int shapeToFontGlyph(VeraCursorShape shape) {
 }
 
 static Cursor getOrCreateBlankCursor(X11Context& ctx, Window window) {
-    if (g_blankCursor) return g_blankCursor;
+    if (gBlankCursor) return gBlankCursor;
 
     char data[1] = {0};
     Pixmap blankPixmap = XCreateBitmapFromData(ctx.display, window, data, 1, 1);
     XColor black{};
-    g_blankCursor = XCreatePixmapCursor(ctx.display, blankPixmap, blankPixmap,
-                                        &black, &black, 0, 0);
+    gBlankCursor = XCreatePixmapCursor(ctx.display, blankPixmap, blankPixmap,
+                                       &black, &black, 0, 0);
     XFreePixmap(ctx.display, blankPixmap);
-    return g_blankCursor;
+    return gBlankCursor;
 }
 
 void applyShape(X11Context& ctx, Window window, VeraCursorShape shape) {
-    auto it = g_shapeCache.find(shape);
+    auto it = gShapeCache.find(shape);
     Cursor cursor;
-    if (it != g_shapeCache.end()) {
+    if (it != gShapeCache.end()) {
         cursor = it->second;
     } else {
         cursor = XCreateFontCursor(ctx.display, shapeToFontGlyph(shape));
-        g_shapeCache[shape] = cursor;
+        gShapeCache[shape] = cursor;
     }
     XDefineCursor(ctx.display, window, cursor);
 }
@@ -75,22 +72,19 @@ void applyMode(X11Context& ctx, Window window, VeraCursorMode mode) {
                 ctx.display, window, True,
                 ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
                 GrabModeAsync, GrabModeAsync, window, None, CurrentTime);
-            // The event loop is responsible for re-centering the pointer each
-            // motion event and converting absolute deltas to relative ones
-            // while this mode is active (see events/X11Events.cxx).
             break;
     }
 }
 
 void shutdown(X11Context& ctx) {
-    for (auto& [shape, cursor] : g_shapeCache) {
+    for (auto& [shape, cursor] : gShapeCache) {
         XFreeCursor(ctx.display, cursor);
     }
-    g_shapeCache.clear();
-    if (g_blankCursor) {
-        XFreeCursor(ctx.display, g_blankCursor);
-        g_blankCursor = 0;
+    gShapeCache.clear();
+    if (gBlankCursor) {
+        XFreeCursor(ctx.display, gBlankCursor);
+        gBlankCursor = 0;
     }
 }
 
-}  // namespace vera::x11::cursor
+}  // namespace cursor

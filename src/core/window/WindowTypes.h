@@ -3,8 +3,6 @@
 #include <optional>
 #include <string>
 
-namespace vera::core::platform {
-
 struct VeraRect {
     uint32_t x = 0;
     uint32_t y = 0;
@@ -67,10 +65,6 @@ struct VeraWindowInfo {
     bool transparentFramebuffer = false;
     std::string iconPath;
 };
-
-}  // namespace vera::core::platform
-
-using namespace vera::core::platform;
 
 template <>
 struct std::hash<VeraWindowHandle> {

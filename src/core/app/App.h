@@ -12,8 +12,6 @@
 #include "core/window/Window.h"
 #include "core/window/WindowTypes.h"
 
-namespace vera::core::app {
-
 class VeraApp {
    public:
     explicit VeraApp(VeraAppInfo info);
@@ -71,5 +69,3 @@ class VeraApp {
     std::function<bool()> m_quitRequestCallback;
     bool m_quitRequested = false;
 };
-
-}  // namespace vera::core::app

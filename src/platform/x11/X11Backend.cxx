@@ -1,7 +1,7 @@
 #include "platform/x11/X11Backend.hxx"
 
 #include <X11/Xlib.h>
-#include <X11/Xlocale.h>  // Added for locale-aware IME configurations
+#include <X11/Xlocale.h>
 
 #include "platform/x11/events/X11Events.hxx"
 #include "platform/x11/internal/X11XInput2.hxx"
@@ -18,29 +18,17 @@
 #include "platform/x11/input/X11Joystick.hxx"
 #include "platform/x11/internal/X11Atoms.hxx"
 
-namespace vera::x11 {
-
-using namespace internal;
-using namespace desktop;
-
 bool X11Backend::initialize(const VeraAppInfo& info) {
-    // Xlib is not thread-safe by default; enabling this costs a small amount
-    // of locking overhead but is required if the embedding app ever touches
-    // windows from more than one thread (e.g. a render thread).
     XInitThreads();
 
-    // Setup locale modifiers so that standard system input methods are honored
     std::setlocale(LC_ALL, "");
     XSetLocaleModifiers("");
 
     m_ctx.display = XOpenDisplay(nullptr);
     if (!m_ctx.display) return false;
 
-    // Open the global Input Method (XIM)
     m_ctx.xim = XOpenIM(m_ctx.display, nullptr, nullptr, nullptr);
     if (!m_ctx.xim) {
-        // Fallback: if no desktop IME manager is running, try to force a local
-        // translation mode
         XSetLocaleModifiers("@im=none");
         m_ctx.xim = XOpenIM(m_ctx.display, nullptr, nullptr, nullptr);
     }
@@ -55,7 +43,7 @@ bool X11Backend::initialize(const VeraAppInfo& info) {
     clipboard::initialize(m_ctx);
     theme::initialize(m_ctx);
 
-    input::initialize(m_ctx);
+    x11joystick::initialize(m_ctx);
 
     if (info.enablePlatformDebugging) {
         XSynchronize(m_ctx.display, True);
@@ -71,13 +59,12 @@ X11Backend::~X11Backend() {
             XDestroyWindow(m_ctx.display, m_ctx.clipboardOwnerWindow);
         }
 
-        // Clean up the global Input Method connection
         if (m_ctx.xim) {
             XCloseIM(m_ctx.xim);
             m_ctx.xim = nullptr;
         }
 
-        input::shutdown(m_ctx);
+        x11joystick::shutdown(m_ctx);
         XCloseDisplay(m_ctx.display);
     }
 }
@@ -112,7 +99,7 @@ std::expected<std::unique_ptr<VeraWindow>, VeraError> X11Backend::createWindow(
     XSetWindowAttributes attributes{};
     attributes.background_pixel = WhitePixel(m_ctx.display, m_ctx.screen);
     attributes.override_redirect = False;
-    unsigned long valueMask = CWBackPixel;
+    ulong valueMask = CWBackPixel;
 
     int depth = DefaultDepth(m_ctx.display, m_ctx.screen);
     Visual* visual = DefaultVisual(m_ctx.display, m_ctx.screen);
@@ -150,8 +137,8 @@ std::expected<std::unique_ptr<VeraWindow>, VeraError> X11Backend::createWindow(
 }
 
 void X11Backend::pollEvents() {
-    input::update(m_ctx);
-    events::poll(m_ctx, m_quitRequestCallback, m_displayChangeCallback);
+    x11joystick::update(m_ctx);
+    poll(m_ctx, m_quitRequestCallback, m_displayChangeCallback);
 
     auto it = m_ctx.windowsByXid.begin();
     while (it != m_ctx.windowsByXid.end()) {
@@ -167,21 +154,12 @@ void X11Backend::pollEvents() {
 }
 
 void X11Backend::waitEvents() {
-    events::wait(m_ctx, m_quitRequestCallback, m_displayChangeCallback);
+    wait(m_ctx, m_quitRequestCallback, m_displayChangeCallback);
 }
 
 void X11Backend::waitEventsTimeout(double timeoutSeconds) {
-    events::waitTimeout(m_ctx, timeoutSeconds, m_quitRequestCallback,
-                        m_displayChangeCallback);
-}
-
-void X11Backend::setJoystickButtonCallback(
-    VeraJoystickButtonCallback callback) {
-    input::setButtonCallback(callback);
-}
-
-void X11Backend::setJoystickAxisCallback(VeraJoystickAxisCallback callback) {
-    input::setAxisCallback(callback);
+    waitTimeout(m_ctx, timeoutSeconds, m_quitRequestCallback,
+                m_displayChangeCallback);
 }
 
 void X11Backend::setQuitRequestCallback(std::function<bool()> callback) {
@@ -209,11 +187,7 @@ std::vector<VeraDisplayModeInfo> X11Backend::getSupportedDisplayModes(
     return monitor::getSupportedDisplayModes(m_ctx, monitor);
 }
 
-bool X11Backend::supportsNativeDecorationHitTesting() const {
-    // See X11Decoration.hxx: X11 has no native hit-test mechanism, we emulate
-    // custom-titlebar dragging via _NET_WM_MOVERESIZE ourselves.
-    return false;
-}
+bool X11Backend::supportsNativeDecorationHitTesting() const { return false; }
 
 std::string X11Backend::getClipboardText() const {
     return clipboard::getText(m_ctx);
@@ -224,7 +198,7 @@ void X11Backend::setClipboardText(const std::string& text) {
 bool X11Backend::hasClipboardText() const { return clipboard::hasText(m_ctx); }
 
 void X11Backend::setDragCallback(VeraDragCallback callback) {
-    dnd::setCallback(std::move(callback));
+    setCallback(std::move(callback));
 }
 
 VeraSystemTheme X11Backend::getSystemTheme() const {
@@ -241,5 +215,3 @@ VeraNativeHandle X11Backend::getNativeHandle() const {
     handle.display = m_ctx.display;
     return handle;
 }
-
-}  // namespace vera::x11

@@ -1,14 +1,11 @@
 #pragma once
 
+#include <X11/X.h>
 #include <X11/Xlib.h>
 
 #include <functional>
 
 #include "core/input/Mouse.h"
-#include <X11/X.h>
-namespace vera::x11::input {
-
-using namespace core::input;
 
 static bool mapButton(unsigned int xButton, VeraMouseButton& out) {
     switch (xButton) {
@@ -28,7 +25,7 @@ static bool mapButton(unsigned int xButton, VeraMouseButton& out) {
             out = VeraMouseButton::VeraButton5;
             return true;
         default:
-            return false;  // 4/5/6/7 are scroll, handled separately
+            return false;
     }
 }
 
@@ -53,16 +50,16 @@ void handleButtonPress(
             break;
     }
     VeraMouseButton button;
-    if (mapButton(event.button, button) && buttonCallback)
+    if (mapButton(event.button, button) && buttonCallback) {
         buttonCallback(button, true);
+    }
 }
 
 void handleButtonRelease(
     XButtonEvent& event,
     const std::function<void(VeraMouseButton, bool)>& buttonCallback) {
     VeraMouseButton button;
-    if (mapButton(event.button, button) && buttonCallback)
+    if (mapButton(event.button, button) && buttonCallback) {
         buttonCallback(button, false);
+    }
 }
-
-}  // namespace vera::x11::input

@@ -4,8 +4,6 @@
 #include <string>
 #include <vector>
 
-namespace vera::core::window {
-
 class VeraWindow;
 
 enum class VeraDragAction { Enter, Over, Drop, Leave };
@@ -18,5 +16,3 @@ struct VeraDragEvent {
 };
 
 using VeraDragCallback = std::function<bool(const VeraDragEvent&)>;
-
-}  // namespace vera::core::window

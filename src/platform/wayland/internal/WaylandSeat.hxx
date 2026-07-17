@@ -6,10 +6,6 @@
 #include "platform/wayland/input/WaylandPointer.hxx"
 #include "platform/wayland/internal/WaylandInternal.hxx"
 
-namespace vera::wayland::internal {
-
-using namespace input;
-
 static void seatHandleCapabilities(void* data, wl_seat* seat,
                                    uint32_t capabilities) {
     auto* ctx = static_cast<WaylandContext*>(data);
@@ -40,7 +36,7 @@ static void seatHandleName(void* data, wl_seat* seat, const char* name) {
 #endif
 }
 
-static const wl_seat_listener kSeatListener = {
+static const wl_seat_listener KSEAT_LISTENER = {
     .capabilities = seatHandleCapabilities, .name = seatHandleName};
 
 void bind(WaylandContext& ctx, wl_registry* registry, uint32_t name,
@@ -49,11 +45,9 @@ void bind(WaylandContext& ctx, wl_registry* registry, uint32_t name,
         registry, name, &wl_seat_interface, std::min(version, 7u)));
 
     if (ctx.seat) {
-        wl_seat_add_listener(ctx.seat, &kSeatListener, &ctx);
+        wl_seat_add_listener(ctx.seat, &KSEAT_LISTENER, &ctx);
     }
 }
 
 void bind(WaylandContext& ctx, wl_registry* registry, uint32_t name,
           uint32_t version);
-
-}  // namespace vera::wayland::internal

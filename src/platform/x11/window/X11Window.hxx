@@ -6,12 +6,6 @@
 #include "platform/x11/input/X11Keyboard.hxx"
 #include "platform/x11/internal/X11Internal.hxx"
 
-namespace vera::x11::window {
-
-using namespace ::vera::x11::internal;
-using namespace ::vera::x11::input;
-using namespace ::vera::core::window;
-
 class X11Window : public VeraWindow {
    public:
     X11Window(X11Context& ctx, Window xid, VeraWindowHandle handle,
@@ -33,10 +27,7 @@ class X11Window : public VeraWindow {
     void maximize() override;
     void restore() override;
     void close() override;
-    // Called when the WM sends WM_DELETE_WINDOW (user clicked the WM's own
-    // close button / used the taskbar, not our close()). Distinct from
-    // close() because close() re-sends WM_DELETE_WINDOW to itself, which
-    // would loop if reused here.
+
     void handleWmCloseRequest();
 
     bool isPendingDeletion() { return m_pendingDeletion; }
@@ -78,12 +69,9 @@ class X11Window : public VeraWindow {
     virtual void setJoystickAxisCallback(
         VeraJoystickAxisCallback callback) override;
 
-    // --- Internal: called only by events/X11Events.cxx during event dispatch.
-    // ---
     Window xid() const { return m_xid; }
     void handleXEvent(XEvent& event);
 
-    // Retrieve the active input context for Unicode character translations
     XIC getXIC() const { return m_xic; }
 
    private:
@@ -100,7 +88,7 @@ class X11Window : public VeraWindow {
     bool m_pendingDeletion = false;
     bool m_isRunnig = false;
 
-    XIC m_xic = nullptr;  // Managed input context handle
+    XIC m_xic = nullptr;
 
     KeyStateArray m_keyState{};
 
@@ -117,5 +105,3 @@ class X11Window : public VeraWindow {
     std::function<void(uint32_t, uint32_t, bool)> m_joyButtonCallback;
     std::function<void(uint32_t, uint32_t, float)> m_joyAxisCallback;
 };
-
-}  // namespace vera::x11::window

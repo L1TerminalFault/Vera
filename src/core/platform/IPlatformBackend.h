@@ -13,11 +13,6 @@
 #include "core/window/DragDrop.h"
 #include "core/window/Window.h"
 
-namespace vera::core::platform {
-
-using namespace window;
-using namespace app;
-
 class IPlatformBackend {
    public:
     virtual ~IPlatformBackend() = default;
@@ -51,9 +46,4 @@ class IPlatformBackend {
     virtual VeraSystemTheme getSystemTheme() const = 0;
     virtual std::vector<VeraInputDeviceInfo> getInputDevices() const = 0;
     virtual VeraNativeHandle getNativeHandle() const = 0;
-    virtual void setJoystickButtonCallback(
-        VeraJoystickButtonCallback callback) = 0;
-    virtual void setJoystickAxisCallback(VeraJoystickAxisCallback callback) = 0;
 };
-
-}  // namespace vera::core::platform

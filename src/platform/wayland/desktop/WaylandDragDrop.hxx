@@ -5,7 +5,6 @@
 #include <unistd.h>
 
 #include <cstring>
-#include <functional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -14,15 +13,12 @@
 #include "platform/wayland/internal/WaylandInternal.hxx"
 #include "platform/wayland/internal/protocols/xdg-shell-client-protocol.h"
 
-namespace vera::wayland::desktop::dnd {
+namespace dnd {
 
-using namespace core::window;
-using namespace internal;
-
-static VeraDragCallback g_DragCallback = nullptr;
-static wl_data_offer* g_ActiveDndOffer = nullptr;
-static double g_LastDragX = 0.0;
-static double g_LastDragY = 0.0;
+static VeraDragCallback gDragCallback = nullptr;
+static wl_data_offer* gActiveDndOffer = nullptr;
+static double gLastDragX = 0.0;
+static double gLastDragY = 0.0;
 
 static std::string urlDecode(const std::string& SRC) {
     std::string ret;
@@ -72,12 +68,12 @@ static void handleDragEnter(void* data, wl_data_device* device, uint32_t serial,
     (void)serial;
     (void)surface;
 
-    g_ActiveDndOffer = offer;
-    g_LastDragX = wl_fixed_to_double(x);
-    g_LastDragY = wl_fixed_to_double(y);
+    gActiveDndOffer = offer;
+    gLastDragX = wl_fixed_to_double(x);
+    gLastDragY = wl_fixed_to_double(y);
 
-    if (g_ActiveDndOffer) {
-        wl_data_offer_accept(g_ActiveDndOffer, serial, "text/uri-list");
+    if (gActiveDndOffer) {
+        wl_data_offer_accept(gActiveDndOffer, serial, "text/uri-list");
     }
 }
 
@@ -87,21 +83,21 @@ static void handleDragMotion(void* data, wl_data_device* device, uint32_t time,
     (void)device;
     (void)time;
 
-    g_LastDragX = wl_fixed_to_double(x);
-    g_LastDragY = wl_fixed_to_double(y);
+    gLastDragX = wl_fixed_to_double(x);
+    gLastDragY = wl_fixed_to_double(y);
 }
 
 static void handleDragLeave(void* data, wl_data_device* device) {
     (void)data;
     (void)device;
-    g_ActiveDndOffer = nullptr;
+    gActiveDndOffer = nullptr;
 }
 
 static void handleDragDrop(void* data, wl_data_device* device) {
     auto* ctx = static_cast<WaylandContext*>(data);
     (void)device;
 
-    if (!g_ActiveDndOffer || !g_DragCallback) {
+    if (!gActiveDndOffer || !gDragCallback) {
         return;
     }
 
@@ -110,7 +106,7 @@ static void handleDragDrop(void* data, wl_data_device* device) {
         return;
     }
 
-    wl_data_offer_receive(g_ActiveDndOffer, "text/uri-list", fds[1]);
+    wl_data_offer_receive(gActiveDndOffer, "text/uri-list", fds[1]);
     close(fds[1]);
 
     wl_display_flush(ctx->display);
@@ -133,17 +129,17 @@ static void handleDragDrop(void* data, wl_data_device* device) {
     if (!paths.empty()) {
         VeraDragEvent event{};
         event.paths = std::move(paths);
-        event.x = g_LastDragX;
-        event.y = g_LastDragY;
+        event.x = gLastDragX;
+        event.y = gLastDragY;
 
-        g_DragCallback(event);
+        gDragCallback(event);
     }
 
-    wl_data_offer_finish(g_ActiveDndOffer);
-    g_ActiveDndOffer = nullptr;
+    wl_data_offer_finish(gActiveDndOffer);
+    gActiveDndOffer = nullptr;
 }
 
-static const wl_data_device_listener kDataDeviceDndListener = {
+static const wl_data_device_listener KDATA_DEVICE_DND_LISTENER = {
     .data_offer = [](void*, wl_data_device*,
                      wl_data_offer*) { /* Handled contextually */ },
     .enter = handleDragEnter,
@@ -155,19 +151,19 @@ static const wl_data_device_listener kDataDeviceDndListener = {
 
 void initialize(WaylandContext& ctx) {
     if (ctx.dataDevice) {
-        wl_data_device_add_listener(ctx.dataDevice, &kDataDeviceDndListener,
+        wl_data_device_add_listener(ctx.dataDevice, &KDATA_DEVICE_DND_LISTENER,
                                     &ctx);
     }
 }
 
 void setDragCallback(WaylandContext& ctx, VeraDragCallback callback) {
     (void)ctx;
-    g_DragCallback = std::move(callback);
+    gDragCallback = std::move(callback);
 }
 
 void shutdown() {
-    g_DragCallback = nullptr;
-    g_ActiveDndOffer = nullptr;
+    gDragCallback = nullptr;
+    gActiveDndOffer = nullptr;
 }
 
-}  // namespace vera::wayland::desktop::dnd
+}  // namespace dnd

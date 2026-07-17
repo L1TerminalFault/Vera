@@ -7,22 +7,19 @@
 
 #include "platform/x11/internal/X11Internal.hxx"
 
-namespace vera::x11::desktop::clipboard {
+static std::string gOwnedText;
+static bool gOwningSelection = false;
 
-using namespace internal;
-
-static std::string g_ownedText;
-static bool g_owningSelection = false;
+namespace clipboard {
 
 void initialize(X11Context& ctx) {
-    // A never-mapped window purely to be a SelectionOwner / SelectionRequester.
     ctx.clipboardOwnerWindow =
         XCreateSimpleWindow(ctx.display, ctx.root, -10, -10, 1, 1, 0, 0, 0);
 }
 
 void setText(X11Context& ctx, const std::string& text) {
-    g_ownedText = text;
-    g_owningSelection = true;
+    gOwnedText = text;
+    gOwningSelection = true;
     XSetSelectionOwner(ctx.display, ctx.atoms.clipboard,
                        ctx.clipboardOwnerWindow, CurrentTime);
 }
@@ -32,18 +29,13 @@ std::string getText(X11Context& ctx) {
     if (owner == None) return {};
 
     if (owner == ctx.clipboardOwnerWindow) {
-        // We own it ourselves -- no round trip needed.
-        return g_ownedText;
+        return gOwnedText;
     }
 
     Atom property = XInternAtom(ctx.display, "VERA_CLIPBOARD_TRANSFER", False);
     XConvertSelection(ctx.display, ctx.atoms.clipboard, ctx.atoms.utf8String,
                       property, ctx.clipboardOwnerWindow, CurrentTime);
 
-    // Block briefly for the SelectionNotify. A production event loop would
-    // do this asynchronously; this synchronous wait keeps the public
-    // getClipboardText() API simple and is bounded to avoid hanging forever
-    // if the owning app never responds.
     XEvent event;
     for (int attempts = 0; attempts < 200; ++attempts) {
         if (XCheckTypedWindowEvent(ctx.display, ctx.clipboardOwnerWindow,
@@ -53,12 +45,13 @@ std::string getText(X11Context& ctx) {
         XFlush(ctx.display);
         usleep(1000);
     }
-    if (event.type != SelectionNotify || event.xselection.property == None)
+    if (event.type != SelectionNotify || event.xselection.property == None) {
         return {};
+    }
 
     Atom actualType;
     int actualFormat;
-    unsigned long itemCount, bytesAfter;
+    ulong itemCount, bytesAfter;
     unsigned char* data = nullptr;
     std::string result;
     if (XGetWindowProperty(ctx.display, ctx.clipboardOwnerWindow, property, 0,
@@ -96,8 +89,8 @@ void handleSelectionRequest(X11Context& ctx, XSelectionRequestEvent& request) {
         XChangeProperty(
             ctx.display, request.requestor, request.property, request.target, 8,
             PropModeReplace,
-            reinterpret_cast<const unsigned char*>(g_ownedText.data()),
-            static_cast<int>(g_ownedText.size()));
+            reinterpret_cast<const unsigned char*>(gOwnedText.data()),
+            static_cast<int>(gOwnedText.size()));
         response.property = request.property;
     }
 
@@ -106,8 +99,8 @@ void handleSelectionRequest(X11Context& ctx, XSelectionRequestEvent& request) {
 }
 
 void handleSelectionClear(X11Context&, XSelectionClearEvent&) {
-    g_owningSelection = false;
-    g_ownedText.clear();
+    gOwningSelection = false;
+    gOwnedText.clear();
 }
 
-}  // namespace vera::x11::desktop::clipboard
+}  // namespace clipboard

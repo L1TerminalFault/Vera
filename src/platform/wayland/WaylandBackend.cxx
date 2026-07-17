@@ -15,14 +15,6 @@
 #include "platform/wayland/monitor/WaylandMonitor.hxx"
 #include "platform/wayland/window/WaylandWindow.hxx"
 
-namespace vera::wayland {
-
-using namespace input;
-using namespace desktop;
-using namespace inputconstraints;
-using namespace window;
-using namespace monitor;
-
 static void seatHandleCapabilities(void* data, wl_seat* seat,
                                    uint32_t capabilities) {
     auto* ctx = static_cast<WaylandContext*>(data);
@@ -36,7 +28,7 @@ static void seatHandleCapabilities(void* data, wl_seat* seat,
 
     if ((capabilities & WL_SEAT_CAPABILITY_KEYBOARD) && !ctx->keyboard) {
         ctx->keyboard = wl_seat_get_keyboard(seat);
-        wl_keyboard_add_listener(ctx->keyboard, &kKeyboardListener, ctx);
+        wl_keyboard_add_listener(ctx->keyboard, &KKEYBOARD_LISTENER, ctx);
     } else if (!(capabilities & WL_SEAT_CAPABILITY_KEYBOARD) && ctx->keyboard) {
         wl_keyboard_release(ctx->keyboard);
         ctx->keyboard = nullptr;
@@ -52,7 +44,7 @@ static void seatHandleName(void* data, wl_seat* seat, const char* name) {
 #endif
 }
 
-static const wl_seat_listener kSeatListener = {
+static const wl_seat_listener KSEAT_LISTENER = {
     .capabilities = seatHandleCapabilities, .name = seatHandleName};
 
 static void registryHandleGlobal(void* data, wl_registry* registry,
@@ -69,7 +61,7 @@ static void registryHandleGlobal(void* data, wl_registry* registry,
     } else if (std::strcmp(interface, "wl_seat") == 0) {
         ctx->seat = static_cast<wl_seat*>(wl_registry_bind(
             registry, name, &wl_seat_interface, std::min(version, 7u)));
-        wl_seat_add_listener(ctx->seat, &kSeatListener, ctx);
+        wl_seat_add_listener(ctx->seat, &KSEAT_LISTENER, ctx);
     } else if (std::strcmp(interface, "xdg_wm_base") == 0) {
         ctx->wmBase = static_cast<xdg_wm_base*>(
             wl_registry_bind(registry, name, &xdg_wm_base_interface, 1));
@@ -91,7 +83,7 @@ static void registryHandleGlobalRemove(void* data, wl_registry* registry,
     (void)name;
 }
 
-static const wl_registry_listener kRegistryListener = {
+static const wl_registry_listener KREGISTRY_LISTENER = {
     .global = registryHandleGlobal,
     .global_remove = registryHandleGlobalRemove};
 
@@ -106,7 +98,7 @@ bool WaylandBackend::initialize(const VeraAppInfo& info) {
     }
 
     m_ctx.registry = wl_display_get_registry(m_ctx.display);
-    wl_registry_add_listener(m_ctx.registry, &kRegistryListener, &m_ctx);
+    wl_registry_add_listener(m_ctx.registry, &KREGISTRY_LISTENER, &m_ctx);
 
     wl_display_roundtrip(m_ctx.display);
 
@@ -117,13 +109,13 @@ bool WaylandBackend::initialize(const VeraAppInfo& info) {
     }
 
     theme::initialize(m_ctx);
-    input::initialize(m_ctx);
+    waylandjoystick::initialize(m_ctx);
 
     return true;
 }
 
 void WaylandBackend::shutdown() {
-    input::shutdown(m_ctx);
+    waylandjoystick::shutdown(m_ctx);
     theme::shutdown();
     unlockPointer(m_ctx);
 
@@ -176,21 +168,11 @@ WaylandBackend::createWindow(const VeraWindowInfo& info) {
     }
 }
 
-void WaylandBackend::setJoystickButtonCallback(
-    VeraJoystickButtonCallback callback) {
-    input::setButtonCallback(callback);
-}
-
-void WaylandBackend::setJoystickAxisCallback(
-    VeraJoystickAxisCallback callback) {
-    input::setAxisCallback(callback);
-}
-
 void WaylandBackend::pollEvents() {
-    input::update(m_ctx);
+    waylandjoystick::update(m_ctx);
     theme::update();
 
-    events::poll(m_ctx, m_quitRequestCallback, m_displayChangeCallback);
+    poll(m_ctx, m_quitRequestCallback, m_displayChangeCallback);
 
     auto it = m_ctx.windowsBySurface.begin();
     while (it != m_ctx.windowsBySurface.end()) {
@@ -207,16 +189,16 @@ void WaylandBackend::pollEvents() {
 }
 
 void WaylandBackend::waitEvents() {
-    input::update(m_ctx);
+    waylandjoystick::update(m_ctx);
     theme::update();
-    events::wait(m_ctx, m_quitRequestCallback, m_displayChangeCallback);
+    wait(m_ctx, m_quitRequestCallback, m_displayChangeCallback);
 }
 
 void WaylandBackend::waitEventsTimeout(double timeoutSeconds) {
-    input::update(m_ctx);
+    waylandjoystick::update(m_ctx);
     theme::update();
-    events::waitTimeout(m_ctx, timeoutSeconds, m_quitRequestCallback,
-                        m_displayChangeCallback);
+    waitTimeout(m_ctx, timeoutSeconds, m_quitRequestCallback,
+                m_displayChangeCallback);
 }
 
 void WaylandBackend::setQuitRequestCallback(std::function<bool()> callback) {
@@ -282,5 +264,3 @@ VeraNativeHandle WaylandBackend::getNativeHandle() const {
     handle.display = m_ctx.display;
     return handle;
 }
-
-}  // namespace vera::wayland

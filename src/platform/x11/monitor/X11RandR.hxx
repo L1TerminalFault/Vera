@@ -5,16 +5,15 @@
 #include "core/monitor/Monitor.h"
 #include "platform/x11/internal/X11Internal.hxx"
 
-namespace vera::x11::monitor::xrandr {
+namespace xrandr {
 
-bool initialize(internal::X11Context& ctx);
+bool initialize(X11Context& ctx);
 
-float queryDpiScale(internal::X11Context& ctx);
+float queryDpiScale(X11Context& ctx);
 
-std::vector<core::monitor::VeraMonitorInfo> queryMonitors(
-    internal::X11Context& ctx);
+std::vector<VeraMonitorInfo> queryMonitors(X11Context& ctx);
 
-std::vector<core::monitor::VeraDisplayModeInfo> queryDisplayModes(
-    internal::X11Context& ctx, const core::monitor::VeraMonitorInfo& monitor);
+std::vector<VeraDisplayModeInfo> queryDisplayModes(
+    X11Context& ctx, const VeraMonitorInfo& monitor);
 
-}  // namespace vera::x11::monitor::xrandr
+}  // namespace xrandr

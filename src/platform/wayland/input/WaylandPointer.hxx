@@ -4,14 +4,9 @@
 
 #include "platform/wayland/window/WaylandWindow.hxx"
 
-namespace vera::wayland::input {
-
-using namespace core::input;
-using namespace window;
-
-static double s_pointerX = 0.0;
-static double s_pointerY = 0.0;
-static WaylandWindow* s_pointerTargetWindow = nullptr;
+static double sPointerX = 0.0;
+static double sPointerY = 0.0;
+static WaylandWindow* sPointerTargetWindow = nullptr;
 
 static VeraMouseButton translateMouseButton(uint32_t button) {
     switch (button) {
@@ -39,9 +34,9 @@ static void pointerHandleEnter(void* data, wl_pointer* pointer, uint32_t serial,
 
     auto it = ctx->windowsBySurface.find(surface);
     if (it != ctx->windowsBySurface.end()) {
-        s_pointerTargetWindow = it->second;
-        s_pointerX = wl_fixed_to_double(sx);
-        s_pointerY = wl_fixed_to_double(sy);
+        sPointerTargetWindow = it->second;
+        sPointerX = wl_fixed_to_double(sx);
+        sPointerY = wl_fixed_to_double(sy);
     }
 }
 
@@ -51,7 +46,7 @@ static void pointerHandleLeave(void* data, wl_pointer* pointer, uint32_t serial,
     (void)pointer;
     (void)serial;
     (void)surface;
-    s_pointerTargetWindow = nullptr;
+    sPointerTargetWindow = nullptr;
 }
 
 static void pointerHandleMotion(void* data, wl_pointer* pointer, uint32_t time,
@@ -59,8 +54,8 @@ static void pointerHandleMotion(void* data, wl_pointer* pointer, uint32_t time,
     (void)data;
     (void)pointer;
     (void)time;
-    s_pointerX = wl_fixed_to_double(sx);
-    s_pointerY = wl_fixed_to_double(sy);
+    sPointerX = wl_fixed_to_double(sx);
+    sPointerY = wl_fixed_to_double(sy);
 }
 
 static void pointerHandleButton(void* data, wl_pointer* pointer,
@@ -72,13 +67,13 @@ static void pointerHandleButton(void* data, wl_pointer* pointer,
     (void)time;
     (void)ctx;
 
-    if (!s_pointerTargetWindow) return;
+    if (!sPointerTargetWindow) return;
 
     VeraMouseButton veraButton = translateMouseButton(button);
     bool pressed = (state == WL_POINTER_BUTTON_STATE_PRESSED);
 
-    if (s_pointerTargetWindow->getMouseButtonCallback()) {
-        s_pointerTargetWindow->getMouseButtonCallback()(veraButton, pressed);
+    if (sPointerTargetWindow->getMouseButtonCallback()) {
+        sPointerTargetWindow->getMouseButtonCallback()(veraButton, pressed);
     }
 }
 
@@ -88,16 +83,16 @@ static void pointerHandleAxis(void* data, wl_pointer* pointer, uint32_t time,
     (void)pointer;
     (void)time;
 
-    if (!s_pointerTargetWindow) return;
+    if (!sPointerTargetWindow) return;
 
     double scrollVal = wl_fixed_to_double(value);
     double normScroll = -scrollVal / 10.0;
 
-    if (s_pointerTargetWindow->getScrollCallback()) {
+    if (sPointerTargetWindow->getScrollCallback()) {
         if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
-            s_pointerTargetWindow->getScrollCallback()(0.0, normScroll);
+            sPointerTargetWindow->getScrollCallback()(0.0, normScroll);
         } else if (axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL) {
-            s_pointerTargetWindow->getScrollCallback()(normScroll, 0.0);
+            sPointerTargetWindow->getScrollCallback()(normScroll, 0.0);
         }
     }
 }
@@ -106,9 +101,8 @@ static void pointerHandleFrame(void* data, wl_pointer* pointer) {
     (void)data;
     (void)pointer;
 
-    if (s_pointerTargetWindow &&
-        s_pointerTargetWindow->getMouseMoveCallback()) {
-        s_pointerTargetWindow->getMouseMoveCallback()(s_pointerX, s_pointerY);
+    if (sPointerTargetWindow && sPointerTargetWindow->getMouseMoveCallback()) {
+        sPointerTargetWindow->getMouseMoveCallback()(sPointerX, sPointerY);
     }
 }
 
@@ -135,7 +129,7 @@ static void pointerHandleAxisDiscrete(void* data, wl_pointer* pointer,
     (void)discrete;
 }
 
-static const wl_pointer_listener kPointerListener = {
+static const wl_pointer_listener KPOINTER_LISTENER = {
     .enter = pointerHandleEnter,
     .leave = pointerHandleLeave,
     .motion = pointerHandleMotion,
@@ -151,8 +145,6 @@ static const wl_pointer_listener kPointerListener = {
 
 void addListener(WaylandContext& ctx, wl_pointer* pointer) {
     if (pointer) {
-        wl_pointer_add_listener(pointer, &kPointerListener, &ctx);
+        wl_pointer_add_listener(pointer, &KPOINTER_LISTENER, &ctx);
     }
 }
-
-}  // namespace vera::wayland::input

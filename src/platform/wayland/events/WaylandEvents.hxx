@@ -8,10 +8,6 @@
 
 #include "platform/wayland/internal/WaylandInternal.hxx"
 
-namespace vera::wayland::events {
-
-using namespace internal;
-
 void poll(WaylandContext& ctx, const std::function<bool()>& quitRequestCallback,
           const std::function<void()>& displayChangeCallback) {
     (void)displayChangeCallback;
@@ -95,5 +91,3 @@ void waitTimeout(WaylandContext& ctx, double timeoutSeconds,
         }
     }
 }
-
-}  // namespace vera::wayland::events

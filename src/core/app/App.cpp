@@ -2,8 +2,6 @@
 
 #include "core/platform/PlatformFactory.h"
 
-namespace vera::core::app {
-
 VeraApp::VeraApp(VeraAppInfo info) : m_appInfo(info), m_backend(create(info)) {
     if (m_backend) {
         m_backend->setQuitRequestCallback([this]() -> bool {
@@ -128,5 +126,3 @@ std::vector<VeraInputDeviceInfo> VeraApp::getInputDevices() const {
 VeraNativeHandle VeraApp::getNativeHandle() const {
     return m_backend ? m_backend->getNativeHandle() : VeraNativeHandle{};
 }
-
-}  // namespace vera::core::app

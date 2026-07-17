@@ -2,6 +2,8 @@
 
 #include <X11/Xatom.h>
 
+#include <cstdint>
+
 #include "platform/x11/monitor/X11Monitor.hxx"
 #include "platform/x11/window/X11Fullscreen.hxx"
 
@@ -13,8 +15,6 @@
 #include "platform/x11/input/X11Mouse.hxx"
 #include "platform/x11/window/X11Decoration.hxx"
 #include "platform/x11/window/X11Properties.hxx"
-
-namespace vera::x11::window {
 
 X11Window::X11Window(X11Context& ctx, Window xid, VeraWindowHandle handle,
                      const VeraWindowInfo& info)
@@ -45,14 +45,14 @@ X11Window::X11Window(X11Context& ctx, Window xid, VeraWindowHandle handle,
                           m_xid, XNFocusWindow, m_xid, nullptr);
     }
 
-    properties::setTitle(ctx, xid, info.title);
+    ::setTitle(ctx, xid, info.title);
     setSizeHints(ctx, xid, info.minWidth, info.minHeight, info.maxWidth,
                  info.maxHeight, info.resizable);
     setWindowType(ctx, xid);
     setPid(ctx, xid);
     if (!info.decorated) setDecorated(ctx, xid, false);
-    if (info.alwaysOnTop) properties::setAlwaysOnTop(ctx, xid, true);
-    if (!info.iconPath.empty()) properties::setIcon(ctx, xid, info.iconPath);
+    if (info.alwaysOnTop) ::setAlwaysOnTop(ctx, xid, true);
+    if (!info.iconPath.empty()) ::setIcon(ctx, xid, info.iconPath);
 
     // XDND: advertise that we accept drops (version 5).
     Atom xdndVersion = 5;
@@ -93,10 +93,10 @@ void X11Window::setPosition(int32_t x, int32_t y) {
     XMoveWindow(m_ctx.display, m_xid, x, y);
 }
 void X11Window::setMinSize(uint32_t width, uint32_t height) {
-    properties::setSizeHints(m_ctx, m_xid, width, height, 0, 0, true);
+    ::setSizeHints(m_ctx, m_xid, width, height, 0, 0, true);
 }
 void X11Window::setMaxSize(uint32_t width, uint32_t height) {
-    properties::setSizeHints(m_ctx, m_xid, 0, 0, width, height, true);
+    ::setSizeHints(m_ctx, m_xid, 0, 0, width, height, true);
 }
 VeraWindowState X11Window::getState() const { return m_state; }
 
@@ -106,12 +106,12 @@ void X11Window::minimize() {
     XIconifyWindow(m_ctx.display, m_xid, m_ctx.screen);
 }
 void X11Window::maximize() {
-    properties::setNetWmState(m_ctx, m_xid, m_ctx.atoms.netWmStateMaximizedHorz,
-                              m_ctx.atoms.netWmStateMaximizedVert, true);
+    ::setNetWmState(m_ctx, m_xid, m_ctx.atoms.netWmStateMaximizedHorz,
+                    m_ctx.atoms.netWmStateMaximizedVert, true);
 }
 void X11Window::restore() {
-    properties::setNetWmState(m_ctx, m_xid, m_ctx.atoms.netWmStateMaximizedHorz,
-                              m_ctx.atoms.netWmStateMaximizedVert, false);
+    ::setNetWmState(m_ctx, m_xid, m_ctx.atoms.netWmStateMaximizedHorz,
+                    m_ctx.atoms.netWmStateMaximizedVert, false);
     XMapWindow(m_ctx.display, m_xid);
 }
 
@@ -122,18 +122,17 @@ void X11Window::close() {
         event.xclient.window = m_xid;
         event.xclient.message_type = m_ctx.atoms.wmProtocols;
         event.xclient.format = 32;
-        event.xclient.data.l[0] = static_cast<long>(m_ctx.atoms.wmDeleteWindow);
+        event.xclient.data.l[0] =
+            static_cast<int64_t>(m_ctx.atoms.wmDeleteWindow);
         XSendEvent(m_ctx.display, m_xid, False, NoEventMask, &event);
     }
 }
 
 void X11Window::handleWmCloseRequest() {
     if (m_closeRequestCallback) {
-        // Just flag it; do not destroy yet!
         if (!m_closeRequestCallback()) return;
     }
 
-    // Set the flag
     m_pendingDeletion = true;
 }
 
@@ -142,17 +141,17 @@ void X11Window::focus() {
     XRaiseWindow(m_ctx.display, m_xid);
 }
 void X11Window::setTitle(const std::string& title) {
-    properties::setTitle(m_ctx, m_xid, title);
+    ::setTitle(m_ctx, m_xid, title);
 }
 void X11Window::setFullscreen(FullScreenMode mode) {
     apply(m_ctx, m_xid, mode);
     m_state.isFullscreen = (mode != FullScreenMode::Windowed);
 }
 void X11Window::setAlwaysOnTop(bool value) {
-    properties::setAlwaysOnTop(m_ctx, m_xid, value);
+    ::setAlwaysOnTop(m_ctx, m_xid, value);
 }
 void X11Window::setIcon(const std::string& iconPath) {
-    properties::setIcon(m_ctx, m_xid, iconPath);
+    ::setIcon(m_ctx, m_xid, iconPath);
 }
 
 void X11Window::setTitlebarHitTestRegions(const VeraHitTestRegions& regions) {
@@ -213,14 +212,15 @@ VeraMonitorInfo X11Window::getCurrentMonitor() const {
 
 void X11Window::setJoystickButtonCallback(VeraJoystickButtonCallback callback) {
     m_joyButtonCallback = callback;
-    input::setButtonCallback([this](uint32_t id, uint32_t btn, bool pressed) {
-        if (m_joyButtonCallback) m_joyButtonCallback(id, btn, pressed);
-    });
+    x11joystick::setButtonCallback(
+        [this](uint32_t id, uint32_t btn, bool pressed) {
+            if (m_joyButtonCallback) m_joyButtonCallback(id, btn, pressed);
+        });
 }
 
 void X11Window::setJoystickAxisCallback(VeraJoystickAxisCallback callback) {
     m_joyAxisCallback = callback;
-    input::setAxisCallback([this](uint32_t id, uint32_t axis, float val) {
+    x11joystick::setAxisCallback([this](uint32_t id, uint32_t axis, float val) {
         if (m_joyAxisCallback) m_joyAxisCallback(id, axis, val);
     });
 }
@@ -233,8 +233,9 @@ void X11Window::handleXEvent(XEvent& event) {
                 static_cast<uint32_t>(xc.height) != m_state.height) {
                 m_state.width = xc.width;
                 m_state.height = xc.height;
-                if (m_resizeCallback)
+                if (m_resizeCallback) {
                     m_resizeCallback(m_state.width, m_state.height);
+                }
             }
             if (xc.x != m_state.x || xc.y != m_state.y) {
                 m_state.x = xc.x;
@@ -261,12 +262,11 @@ void X11Window::handleXEvent(XEvent& event) {
             if (m_focusChangeCallback) m_focusChangeCallback(false);
             break;
         case KeyPress:
-            input::handleKeyPress(m_ctx, event.xkey, m_keyState, m_keyCallback,
-                                  m_charCallback);
+            ::handleKeyPress(m_ctx, event.xkey, m_keyState, m_keyCallback,
+                             m_charCallback);
             break;
         case KeyRelease:
-            input::handleKeyRelease(m_ctx, event.xkey, m_keyState,
-                                    m_keyCallback);
+            ::handleKeyRelease(m_ctx, event.xkey, m_keyState, m_keyCallback);
             break;
         case ButtonPress:
             if (m_customTitleBar) {
@@ -296,9 +296,9 @@ void X11Window::handleXEvent(XEvent& event) {
             break;
         case PropertyNotify:
             if (event.xproperty.atom == m_ctx.atoms.netWmState) {
-                m_state.isMaximized = properties::hasNetWmState(
+                m_state.isMaximized = ::hasNetWmState(
                     m_ctx, m_xid, m_ctx.atoms.netWmStateMaximizedHorz);
-                m_state.isFullscreen = properties::hasNetWmState(
+                m_state.isFullscreen = ::hasNetWmState(
                     m_ctx, m_xid, m_ctx.atoms.netWmStateFullscreen);
             }
             break;
@@ -306,5 +306,3 @@ void X11Window::handleXEvent(XEvent& event) {
             break;
     }
 }
-
-}  // namespace vera::x11::window

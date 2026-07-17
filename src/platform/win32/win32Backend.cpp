@@ -5,10 +5,8 @@
 #include <cstring>
 
 #include "platform/win32/intern.h"
-#include "platform/win32/window/vera_win32.h"
 #include "platform/win32/utils/win32_utils.h"
-
-namespace vera::win32 {
+#include "platform/win32/window/vera_win32.h"
 
 std::expected<std::unique_ptr<VeraWindow>, VeraError>
 Win32Backend::createWindow(const VeraWindowInfo& info) {
@@ -181,5 +179,3 @@ std::vector<VeraInputDeviceInfo> Win32Backend::getInputDevices() const {
 }
 
 VeraNativeHandle Win32Backend::getNativeHandle() const { return {}; }
-
-}  // namespace vera::win32

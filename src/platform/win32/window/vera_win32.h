@@ -9,11 +9,7 @@
 
 #include <atomic>
 
-namespace vera::win32 {
-
-using namespace core::input;
-
-class VeraWin32Window : public core::window::VeraWindow {
+class VeraWin32Window : public VeraWindow {
    public:
     explicit VeraWin32Window(const VeraWindowInfo& info);
     ~VeraWin32Window() override;
@@ -127,7 +123,5 @@ class VeraWin32Window : public core::window::VeraWindow {
 
     std::function<void(VeraWindowHandle)> m_destroyedNotifier;
 };
-
-}  // namespace vera::win32
 
 #endif

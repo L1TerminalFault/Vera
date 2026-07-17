@@ -4,11 +4,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-namespace vera::internal {
-
-void pollPlatformEvents() {
-   
-}
+void pollPlatformEvents() {}
 
 void waitPlatformEvents() {
     MSG msg;
@@ -24,7 +20,5 @@ void waitPlatformEventsTimeout(double timeout_seconds) {
                                 MWMO_INPUTAVAILABLE);
     pollPlatformEvents();
 }
-
-}  // namespace vera::internal
 
 #endif

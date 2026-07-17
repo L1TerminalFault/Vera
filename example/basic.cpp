@@ -5,28 +5,28 @@
 #include "core/app/App.h"
 
 int main() {
-    VeraAppInfo app_info{};
-    app_info.enablePlatformDebugging = true;
+    VeraAppInfo appInfo{};
+    appInfo.enablePlatformDebugging = true;
 
-    VeraApp app(app_info);
+    VeraApp app(appInfo);
 
-    std::vector<VeraWindow*> active_windows;
-    const int window_count = 3;
+    std::vector<VeraWindow*> activeWindows;
+    const int windowCount = 3;
 
-    for (int i = 0; i < window_count; ++i) {
-        VeraWindowInfo win_info{};
-        win_info.width = 600;
-        win_info.height = 400;
+    for (int i = 0; i < windowCount; ++i) {
+        VeraWindowInfo winInfo{};
+        winInfo.width = 600;
+        winInfo.height = 400;
 
-        win_info.centerOnMonitor = false;
-        win_info.x = 100 + (i * 100);
-        win_info.y = 100 + (i * 100);
+        winInfo.centerOnMonitor = false;
+        winInfo.x = 100 + (i * 100);
+        winInfo.y = 100 + (i * 100);
 
-        win_info.title = "Vera Instance #" + std::to_string(i + 1);
-        win_info.customTitleBar = true;
-        win_info.titleBarHeight = 40;
+        winInfo.title = "Vera Instance #" + std::to_string(i + 1);
+        winInfo.customTitleBar = true;
+        winInfo.titleBarHeight = 40;
 
-        auto result = app.createWindow(win_info);
+        auto result = app.createWindow(winInfo);
         if (!result.has_value()) {
             std::cerr << "Failed to initialize Vera window index " << i
                       << std::endl;
@@ -34,7 +34,7 @@ int main() {
         }
 
         VeraWindow* window = result.value();
-        active_windows.push_back(window);
+        activeWindows.push_back(window);
 
         VeraHitTestRegions regions{};
         regions.dragRegion = VeraRect{0, 0, 600, 40};
@@ -47,12 +47,12 @@ int main() {
             std::cout << "[Instance " << window->getHandle().value
                       << "] Resized to: " << w << "x" << h << std::endl;
 
-            VeraHitTestRegions dynamic_regions{};
-            dynamic_regions.dragRegion = VeraRect{0, 0, w, 40};
-            dynamic_regions.minimizeButton = VeraRect{w - 135, 0, 45, 40};
-            dynamic_regions.maximizeButton = VeraRect{w - 90, 0, 45, 40};
-            dynamic_regions.closeButton = VeraRect{w - 45, 0, 45, 40};
-            window->setTitlebarHitTestRegions(dynamic_regions);
+            VeraHitTestRegions dynamicRegions{};
+            dynamicRegions.dragRegion = VeraRect{0, 0, w, 40};
+            dynamicRegions.minimizeButton = VeraRect{w - 135, 0, 45, 40};
+            dynamicRegions.maximizeButton = VeraRect{w - 90, 0, 45, 40};
+            dynamicRegions.closeButton = VeraRect{w - 45, 0, 45, 40};
+            window->setTitlebarHitTestRegions(dynamicRegions);
         });
 
         window->setCloseRequestCallback([&app, window]() -> bool {

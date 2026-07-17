@@ -5,8 +5,6 @@
 #include <string>
 #include <vector>
 
-namespace vera::core::input {
-
 struct VeraJoystickState {
     std::string name;
     bool connected = false;
@@ -18,5 +16,3 @@ using VeraJoystickButtonCallback =
     std::function<void(uint32_t joyId, uint32_t btn, bool pressed)>;
 using VeraJoystickAxisCallback =
     std::function<void(uint32_t joyId, uint32_t axis, float val)>;
-
-}  // namespace vera::core::input

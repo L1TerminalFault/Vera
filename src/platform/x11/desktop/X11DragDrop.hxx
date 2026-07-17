@@ -2,38 +2,18 @@
 
 #include <X11/Xlib.h>
 
-// INFO: Erasing the polluting X11 preprocessor macros completely
-// #undef Status
-// #undef Success
-// #undef Bool
-// #undef True
-// #undef False
-// #undef None
-// #undef CursorShape
-// #undef Button1
-// #undef Button2
-// #undef Button3
-// #undef Button4
-// #undef Button5
-
+#include <cstdint>
 #include <sstream>
 
 #include "core/window/DragDrop.h"
 #include "core/window/Window.h"
 #include "platform/x11/internal/X11Internal.hxx"
 
-namespace vera::x11::desktop::dnd {
+static VeraDragCallback gCallback;
+static Window gSourceWindow = 0;
+static int32_t gPendingX = 0, gPendingY = 0;
 
-using namespace core::window;
-using namespace internal;
-
-static VeraDragCallback g_callback;
-static Window g_sourceWindow = 0;
-static int32_t g_pendingX = 0, g_pendingY = 0;
-
-void setCallback(VeraDragCallback callback) {
-    g_callback = std::move(callback);
-}
+void setCallback(VeraDragCallback callback) { gCallback = std::move(callback); }
 
 static std::vector<std::string> parseUriList(const std::string& data) {
     std::vector<std::string> paths;
@@ -41,12 +21,11 @@ static std::vector<std::string> parseUriList(const std::string& data) {
     std::string line;
     while (std::getline(stream, line)) {
         if (line.empty() || line[0] == '#') continue;
-        // Strip the file:// scheme; leave everything else (including
-        // percent-encoding) to the caller since decoding it is a text-utility
-        // concern, not a windowing one.
+
         constexpr char kFilePrefix[] = "file://";
-        if (line.rfind(kFilePrefix, 0) == 0)
+        if (line.rfind(kFilePrefix, 0) == 0) {
             line = line.substr(sizeof(kFilePrefix) - 1);
+        }
         if (!line.empty() && line.back() == '\r') line.pop_back();
         if (!line.empty()) paths.push_back(line);
     }
@@ -55,17 +34,17 @@ static std::vector<std::string> parseUriList(const std::string& data) {
 
 void handleClientMessage(X11Context& ctx, VeraWindow* window,
                          XClientMessageEvent& event) {
-    if (!g_callback) return;
+    if (!gCallback) return;
 
     if (event.message_type == ctx.atoms.xdndEnter) {
-        g_sourceWindow = static_cast<Window>(event.data.l[0]);
-        g_callback(VeraDragEvent{VeraDragAction::Enter, window, 0, 0, {}});
+        gSourceWindow = static_cast<Window>(event.data.l[0]);
+        gCallback(VeraDragEvent{VeraDragAction::Enter, window, 0, 0, {}});
     } else if (event.message_type == ctx.atoms.xdndPosition) {
         int32_t rootX = static_cast<int32_t>(event.data.l[2]) >> 16;
         int32_t rootY = static_cast<int32_t>(event.data.l[2]) & 0xFFFF;
-        g_pendingX = rootX;
-        g_pendingY = rootY;
-        bool accept = g_callback(
+        gPendingX = rootX;
+        gPendingY = rootY;
+        bool accept = gCallback(
             VeraDragEvent{VeraDragAction::Over, window, rootX, rootY, {}});
 
         XClientMessageEvent status{};
@@ -74,31 +53,30 @@ void handleClientMessage(X11Context& ctx, VeraWindow* window,
         status.message_type = ctx.atoms.xdndStatus;
         status.format = 32;
         status.data.l[0] =
-            static_cast<long>(window->getNativeHandle().x11Window);
+            static_cast<int64_t>(window->getNativeHandle().x11Window);
         status.data.l[1] = accept ? 1 : 0;
         status.data.l[4] =
-            accept ? static_cast<long>(ctx.atoms.xdndActionCopy) : 0;
+            accept ? static_cast<int64_t>(ctx.atoms.xdndActionCopy) : 0;
         XSendEvent(ctx.display, event.data.l[0], False, NoEventMask,
                    reinterpret_cast<XEvent*>(&status));
     } else if (event.message_type == ctx.atoms.xdndDrop) {
-        // Request the file list; the payload arrives as a SelectionNotify.
         Window target =
             static_cast<Window>(window->getNativeHandle().x11Window);
         XConvertSelection(ctx.display, ctx.atoms.xdndSelection,
                           ctx.atoms.textUriList, ctx.atoms.xdndSelection,
                           target, event.data.l[2] /* timestamp */);
     } else if (event.message_type == ctx.atoms.xdndLeave) {
-        g_callback(VeraDragEvent{VeraDragAction::Leave, window, 0, 0, {}});
+        gCallback(VeraDragEvent{VeraDragAction::Leave, window, 0, 0, {}});
     }
 }
 
 void handleSelectionNotify(X11Context& ctx, VeraWindow* window,
                            XSelectionEvent& event) {
-    if (event.property == None || !g_callback) return;
+    if (event.property == None || !gCallback) return;
 
     Atom actualType;
     int actualFormat;
-    unsigned long itemCount, bytesAfter;
+    ulong itemCount, bytesAfter;
     unsigned char* data = nullptr;
     Window target = static_cast<Window>(window->getNativeHandle().x11Window);
 
@@ -109,21 +87,19 @@ void handleSelectionNotify(X11Context& ctx, VeraWindow* window,
         std::string uriList(reinterpret_cast<char*>(data), itemCount);
         XFree(data);
 
-        VeraDragEvent dropEvent{VeraDragAction::Drop, window, g_pendingX,
-                                g_pendingY, parseUriList(uriList)};
-        g_callback(dropEvent);
+        VeraDragEvent dropEvent{VeraDragAction::Drop, window, gPendingX,
+                                gPendingY, parseUriList(uriList)};
+        gCallback(dropEvent);
     }
 
     XClientMessageEvent finished{};
     finished.type = ClientMessage;
-    finished.window = g_sourceWindow;
+    finished.window = gSourceWindow;
     finished.message_type = ctx.atoms.xdndFinished;
     finished.format = 32;
-    finished.data.l[0] = static_cast<long>(target);
+    finished.data.l[0] = static_cast<int64_t>(target);
     finished.data.l[1] = 1;
-    finished.data.l[2] = static_cast<long>(ctx.atoms.xdndActionCopy);
-    XSendEvent(ctx.display, g_sourceWindow, False, NoEventMask,
+    finished.data.l[2] = static_cast<int64_t>(ctx.atoms.xdndActionCopy);
+    XSendEvent(ctx.display, gSourceWindow, False, NoEventMask,
                reinterpret_cast<XEvent*>(&finished));
 }
-
-}  // namespace vera::x11::desktop::dnd

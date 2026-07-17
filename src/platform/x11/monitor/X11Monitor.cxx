@@ -2,18 +2,13 @@
 
 #include "platform/x11/monitor/X11RandR.hxx"
 
-namespace vera::x11::monitor {
+static bool gHasRandR = false;
 
-using namespace internal;
-using namespace monitor;
-using namespace core::monitor;
-
-static bool g_hasRandR = false;
+namespace monitor {
 
 bool initialize(X11Context& ctx) {
-    g_hasRandR = xrandr::initialize(ctx);
-    return true;  // We always succeed: worst case is the single-screen
-                  // fallback.
+    gHasRandR = xrandr::initialize(ctx);
+    return true;
 }
 
 static VeraMonitorInfo fallbackWholeScreen(X11Context& ctx) {
@@ -34,7 +29,7 @@ static VeraMonitorInfo fallbackWholeScreen(X11Context& ctx) {
 }
 
 std::vector<VeraMonitorInfo> getMonitors(X11Context& ctx) {
-    if (g_hasRandR) {
+    if (gHasRandR) {
         auto monitors = xrandr::queryMonitors(ctx);
         if (!monitors.empty()) return monitors;
     }
@@ -60,8 +55,8 @@ VeraMonitorInfo getMonitorAt(X11Context& ctx, int32_t x, int32_t y) {
 
 std::vector<VeraDisplayModeInfo> getSupportedDisplayModes(
     X11Context& ctx, const VeraMonitorInfo& monitor) {
-    if (!g_hasRandR) return {};
+    if (!gHasRandR) return {};
     return xrandr::queryDisplayModes(ctx, monitor);
 }
 
-}  // namespace vera::x11::monitor
+}  // namespace monitor

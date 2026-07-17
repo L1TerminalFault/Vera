@@ -4,11 +4,6 @@
 #include "platform/wayland/internal/WaylandInternal.hxx"
 #include "platform/wayland/internal/protocols/xdg-shell-client-protocol.h"
 
-namespace vera::wayland::window {
-
-using namespace core::window;
-using namespace internal;
-
 class WaylandWindow : public VeraWindow {
    public:
     WaylandWindow(WaylandContext& ctx, VeraWindowHandle handle,
@@ -133,5 +128,3 @@ class WaylandWindow : public VeraWindow {
     std::function<void(uint32_t, uint32_t, bool)> m_joyButtonCallback;
     std::function<void(uint32_t, uint32_t, float)> m_joyAxisCallback;
 };
-
-}  // namespace vera::wayland::window

@@ -2,8 +2,6 @@
 
 #include "core/platform/IPlatformBackend.h"
 
-namespace vera::win32 {
-
 class Win32Backend : public IPlatformBackend {
    public:
     Win32Backend() = default;
@@ -39,16 +37,9 @@ class Win32Backend : public IPlatformBackend {
     std::vector<VeraInputDeviceInfo> getInputDevices() const override;
     VeraNativeHandle getNativeHandle() const override;
 
-     virtual void setJoystickButtonCallback(
-        VeraJoystickButtonCallback callback) override {};
-    virtual void setJoystickAxisCallback(
-        VeraJoystickAxisCallback callback) override {};
-
    private:
     std::function<bool()> m_quitRequestCallback;
     std::function<void()> m_displayChangeCallback;
     std::function<void(VeraSystemTheme)> m_themeChangeCallback;
     VeraDragCallback m_dragCallback;
 };
-
-}  // namespace vera::win32

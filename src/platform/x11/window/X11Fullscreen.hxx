@@ -7,15 +7,7 @@
 #include "platform/x11/internal/X11Internal.hxx"
 #include "platform/x11/window/X11Properties.hxx"
 
-namespace vera::x11::window {
-
-using namespace internal;
-using namespace properties;
-
 static void requestNativeRefreshMode(X11Context& ctx) {
-    // Best-effort: pick the CRTC's currently-connected output's highest
-    // refresh-rate mode at its current resolution. Errors are swallowed --
-    // failing to bump refresh rate shouldn't block entering fullscreen.
     XRRScreenResources* res =
         XRRGetScreenResourcesCurrent(ctx.display, ctx.root);
     if (!res) return;
@@ -36,12 +28,14 @@ static void requestNativeRefreshMode(X11Context& ctx) {
                     if (res->modes[mi].id != output->modes[m]) continue;
                     const XRRModeInfo& mode = res->modes[mi];
                     if (mode.width != crtc->width ||
-                        mode.height != crtc->height)
+                        mode.height != crtc->height) {
                         continue;
+                    }
                     double refresh =
                         mode.hTotal && mode.vTotal
                             ? mode.dotClock /
-                                  (double(mode.hTotal) * mode.vTotal)
+                                  (static_cast<double>(mode.hTotal) *
+                                   mode.vTotal)
                             : 0;
                     if (refresh > bestRefresh) {
                         bestRefresh = refresh;
@@ -78,5 +72,3 @@ void apply(X11Context& ctx, Window window, FullScreenMode mode) {
             break;
     }
 }
-
-}  // namespace vera::x11::window

@@ -1,10 +1,9 @@
 #pragma once
+
 #include <windows.h>
 
 #include <string>
 #include <vector>
-
-namespace vera::platform::win32 {
 
 std::wstring utf8_to_wide(const std::string& utf8) {
     if (utf8.empty()) return L"";
@@ -26,5 +25,3 @@ std::string wide_to_utf8(const std::wstring& wide) {
                         &utf8_str[0], size_needed, nullptr, nullptr);
     return utf8_str;
 }
-
-}  // namespace vera::platform::win32

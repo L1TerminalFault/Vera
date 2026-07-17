@@ -4,11 +4,6 @@
 #include "core/window/WindowTypes.h"
 #include "platform/x11/internal/X11Internal.hxx"
 
-namespace vera::x11 {
-
-using namespace core::window;
-using namespace internal;
-
 class X11Backend : public IPlatformBackend {
    public:
     X11Backend() = default;
@@ -46,10 +41,6 @@ class X11Backend : public IPlatformBackend {
     std::vector<VeraInputDeviceInfo> getInputDevices() const override;
     VeraNativeHandle getNativeHandle() const override;
 
-    void setJoystickButtonCallback(
-        VeraJoystickButtonCallback callback) override;
-    void setJoystickAxisCallback(VeraJoystickAxisCallback callback) override;
-
    private:
     mutable X11Context m_ctx;
     bool m_hasXInput2 = false;
@@ -58,5 +49,3 @@ class X11Backend : public IPlatformBackend {
     std::function<bool()> m_quitRequestCallback;
     std::function<void()> m_displayChangeCallback;
 };
-
-}  // namespace vera::x11

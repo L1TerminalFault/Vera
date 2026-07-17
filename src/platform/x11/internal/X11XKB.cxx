@@ -9,18 +9,13 @@
 #include "platform/x11/internal/X11Internal.hxx"
 #include "platform/x11/window/X11Window.hxx"
 
-namespace vera::x11::internal::xkb {
-
-using namespace core::input;
-using namespace internal;
+namespace xkb {
 
 void initialize(X11Context& ctx) {
     int major = XkbMajorVersion, minor = XkbMinorVersion;
     XkbLibraryVersion(&major, &minor);
     XkbQueryExtension(ctx.display, nullptr, nullptr, nullptr, &major, &minor);
 
-    // Detectable autorepeat: without this, holding a key sends interleaved
-    // KeyRelease/KeyPress pairs that look like real "repeat = false" events.
     Bool supported = False;
     XkbSetDetectableAutoRepeat(ctx.display, True, &supported);
 }
@@ -321,12 +316,9 @@ uint32_t keyEventToCodepoint(X11Context& ctx, XKeyEvent& event) {
     int len = 0;
     XIC targetXic = nullptr;
 
-    // Look up the matching window and obtain its specific Input Context (XIC)
     auto it = ctx.windowsByXid.find(event.window);
     if (it != ctx.windowsByXid.end() && it->second) {
-        targetXic =
-            it->second
-                ->getXIC();  // Ensure getXIC() or similar exists on X11Window
+        targetXic = it->second->getXIC();
     }
 
     if (targetXic) {
@@ -334,28 +326,26 @@ uint32_t keyEventToCodepoint(X11Context& ctx, XKeyEvent& event) {
                                 static_cast<int>(buffer.size()), &keysym,
                                 &status);
     } else {
-        // Fallback to basic ASCII lookup if XIC isn't configured/found
         len = XLookupString(&event, buffer.data(),
                             static_cast<int>(buffer.size()), &keysym, nullptr);
     }
 
     if (len <= 0) return 0;
 
-    // Decode the resulting UTF-8 buffer sequence into a Unicode codepoint
     uint32_t codepoint = 0;
-    auto u8_lead = static_cast<unsigned char>(buffer[0]);
+    auto u8Lead = static_cast<unsigned char>(buffer[0]);
 
-    if (u8_lead < 0x80) {
-        codepoint = u8_lead;
-    } else if ((u8_lead & 0xE0) == 0xC0 && len >= 2) {
-        codepoint = ((u8_lead & 0x1F) << 6) |
+    if (u8Lead < 0x80) {
+        codepoint = u8Lead;
+    } else if ((u8Lead & 0xE0) == 0xC0 && len >= 2) {
+        codepoint = ((u8Lead & 0x1F) << 6) |
                     (static_cast<unsigned char>(buffer[1]) & 0x3F);
-    } else if ((u8_lead & 0xF0) == 0xE0 && len >= 3) {
-        codepoint = ((u8_lead & 0x0F) << 12) |
+    } else if ((u8Lead & 0xF0) == 0xE0 && len >= 3) {
+        codepoint = ((u8Lead & 0x0F) << 12) |
                     ((static_cast<unsigned char>(buffer[1]) & 0x3F) << 6) |
                     (static_cast<unsigned char>(buffer[2]) & 0x3F);
-    } else if ((u8_lead & 0xF8) == 0xF0 && len >= 4) {
-        codepoint = ((u8_lead & 0x07) << 18) |
+    } else if ((u8Lead & 0xF8) == 0xF0 && len >= 4) {
+        codepoint = ((u8Lead & 0x07) << 18) |
                     ((static_cast<unsigned char>(buffer[1]) & 0x3F) << 12) |
                     ((static_cast<unsigned char>(buffer[2]) & 0x3F) << 6) |
                     (static_cast<unsigned char>(buffer[3]) & 0x3F);
@@ -364,4 +354,4 @@ uint32_t keyEventToCodepoint(X11Context& ctx, XKeyEvent& event) {
     return codepoint;
 }
 
-}  // namespace vera::x11::internal::xkb
+}  // namespace xkb

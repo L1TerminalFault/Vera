@@ -2,20 +2,14 @@
 
 #include <wayland-cursor.h>
 
-#include "core/window/Window.h"
+#include "core/input/Mouse.h"
 #include "platform/wayland/input/constraints/WaylandInputConstraint.hxx"
 #include "platform/wayland/internal/WaylandInternal.hxx"
 
-namespace vera::wayland::cursor {
-
-using namespace vera::core::input;
-using namespace internal;
-using namespace vera::wayland::inputconstraints;
-
-static VeraCursorMode s_currentMode = VeraCursorMode::Normal;
+static VeraCursorMode sCurrentMode = VeraCursorMode::Normal;
 
 void setShape(WaylandContext& ctx, VeraCursorShape shape) {
-    if (s_currentMode != VeraCursorMode::Normal || !ctx.pointer) {
+    if (sCurrentMode != VeraCursorMode::Normal || !ctx.pointer) {
         return;
     }
 
@@ -75,7 +69,7 @@ void setShape(WaylandContext& ctx, VeraCursorShape shape) {
 }
 
 void setMode(WaylandContext& ctx, wl_surface* surface, VeraCursorMode mode) {
-    s_currentMode = mode;
+    sCurrentMode = mode;
 
     if (mode == VeraCursorMode::Disabled) {
         lockPointer(ctx, surface);
@@ -97,5 +91,3 @@ void setMode(WaylandContext& ctx, wl_surface* surface, VeraCursorMode mode) {
         }
     }
 }
-
-}  // namespace vera::wayland::cursor

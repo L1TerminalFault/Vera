@@ -2,13 +2,9 @@
 
 #include <vector>
 
-#include "core/platform/IPlatformBackend.h"
 #include "platform/wayland/internal/WaylandInternal.hxx"
 
-namespace vera::wayland::monitor {
-
-using namespace vera::core::monitor;
-using namespace internal;
+namespace monitor {
 
 std::vector<VeraMonitorInfo> getMonitors(const WaylandContext& ctx) {
     std::vector<VeraMonitorInfo> list;
@@ -95,4 +91,4 @@ std::vector<VeraDisplayModeInfo> getSupportedDisplayModes(
     return modes;
 }
 
-}  // namespace vera::wayland::monitor
+}  // namespace monitor

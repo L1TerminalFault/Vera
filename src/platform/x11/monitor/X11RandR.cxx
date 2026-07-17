@@ -8,10 +8,7 @@
 
 #include "core/monitor/Monitor.h"
 
-namespace vera::x11::monitor::xrandr {
-
-using namespace internal;
-using namespace core::monitor;
+namespace xrandr {
 
 bool initialize(X11Context& ctx) {
     int major, minor;
@@ -48,14 +45,14 @@ std::vector<VeraMonitorInfo> queryMonitors(X11Context& ctx) {
 
     Atom actualType;
     int actualFormat;
-    unsigned long itemCount, bytesAfter;
+    ulong itemCount, bytesAfter;
     unsigned char* workAreaProp = nullptr;
-    long workX = 0, workY = 0, workW = 0, workH = 0;
+    int64_t workX = 0, workY = 0, workW = 0, workH = 0;
     if (XGetWindowProperty(ctx.display, ctx.root, ctx.atoms.netWorkarea, 0, 4,
                            False, AnyPropertyType, &actualType, &actualFormat,
                            &itemCount, &bytesAfter, &workAreaProp) == Success &&
         workAreaProp && itemCount >= 4) {
-        long* values = reinterpret_cast<long*>(workAreaProp);
+        int64_t* values = reinterpret_cast<int64_t*>(workAreaProp);
         workX = values[0];
         workY = values[1];
         workW = values[2];
@@ -173,4 +170,4 @@ std::vector<VeraDisplayModeInfo> queryDisplayModes(
     return out;
 }
 
-}  // namespace vera::x11::monitor::xrandr
+}  // namespace xrandr

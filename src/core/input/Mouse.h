@@ -3,8 +3,6 @@
 #include <cstdint>
 #include <string>
 
-namespace vera::core::input {
-
 enum class VeraMouseButton : uint8_t {
     Left,
     Right,
@@ -14,11 +12,7 @@ enum class VeraMouseButton : uint8_t {
     Count
 };
 
-enum class VeraCursorMode : uint8_t {
-    Normal = 0,  // free-moving, visible
-    Hidden,      // hidden but not confined (still generates absolute motion)
-    Disabled     // hidden + confined + relative motion (for FPS-style look)
-};
+enum class VeraCursorMode : uint8_t { Normal = 0, Hidden, Disabled };
 
 enum class VeraCursorShape : uint8_t {
     Arrow = 0,
@@ -37,5 +31,3 @@ struct VeraInputDeviceInfo {
     std::string name;
     bool connected;
 };
-
-}  // namespace vera::core::input

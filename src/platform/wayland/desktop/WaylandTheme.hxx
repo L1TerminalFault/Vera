@@ -7,13 +7,11 @@
 
 #include "platform/wayland/internal/WaylandInternal.hxx"
 
-namespace vera::wayland::desktop::theme {
-
-using namespace internal;
+namespace theme {
 
 enum class VeraThemeMode : uint8_t { Light = 0, Dark };
 
-static VeraThemeMode g_CurrentThemeMode = VeraThemeMode::Dark;
+static VeraThemeMode gCurrentThemeMode = VeraThemeMode::Dark;
 
 static VeraThemeMode detectDesktopPreference() {
     const char* gtkThemeEnv = std::getenv("GTK_THEME");
@@ -51,13 +49,13 @@ static VeraThemeMode detectDesktopPreference() {
 
 void initialize(WaylandContext& ctx) {
     (void)ctx;
-    g_CurrentThemeMode = detectDesktopPreference();
+    gCurrentThemeMode = detectDesktopPreference();
     std::cout << "[Theme] Initialized color mode preference: "
-              << (g_CurrentThemeMode == VeraThemeMode::Dark ? "Dark" : "Light")
+              << (gCurrentThemeMode == VeraThemeMode::Dark ? "Dark" : "Light")
               << "\n";
 }
 
-VeraThemeMode getActiveMode() { return g_CurrentThemeMode; }
+VeraThemeMode getActiveMode() { return gCurrentThemeMode; }
 
 void update() {
     static uint32_t frameCount = 0;
@@ -65,11 +63,11 @@ void update() {
 
     if (frameCount % 300 == 0) {
         VeraThemeMode detected = detectDesktopPreference();
-        if (detected != g_CurrentThemeMode) {
-            g_CurrentThemeMode = detected;
+        if (detected != gCurrentThemeMode) {
+            gCurrentThemeMode = detected;
             std::cout << "[Theme] Desktop theme changed dynamically to: "
-                      << (g_CurrentThemeMode == VeraThemeMode::Dark ? "Dark"
-                                                                    : "Light")
+                      << (gCurrentThemeMode == VeraThemeMode::Dark ? "Dark"
+                                                                   : "Light")
                       << "\n";
         }
     }
@@ -77,4 +75,4 @@ void update() {
 
 void shutdown() {}
 
-}  // namespace vera::wayland::desktop::theme
+}  // namespace theme

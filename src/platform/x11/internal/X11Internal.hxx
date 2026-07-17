@@ -1,6 +1,5 @@
 #pragma once
-// Shared, backend-private state. Nothing outside platform/x11/ should ever
-// include this header -- it is glue, not API surface.
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -9,13 +8,7 @@
 
 #include "core/window/WindowTypes.h"
 
-namespace vera::x11::window {
 class X11Window;
-}
-
-namespace vera::x11::internal {
-
-using namespace window;
 
 struct X11Atoms {
     Atom wmProtocols = 0;
@@ -67,13 +60,10 @@ struct X11Context {
     Window root = 0;
     X11Atoms atoms;
 
-    // The global Input Method resource
     XIM xim = nullptr;
 
-    // XID -> owning VeraWindow
     std::unordered_map<::Window, X11Window*> windowsByXid;
 
-    // Clipboard helper
     Window clipboardOwnerWindow = 0;
 
     uint64_t nextHandleValue = 1;
@@ -82,5 +72,3 @@ struct X11Context {
         return VeraWindowHandle{nextHandleValue++};
     }
 };
-
-}  // namespace vera::x11::internal

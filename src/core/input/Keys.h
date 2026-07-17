@@ -2,8 +2,6 @@
 
 #include <cstdint>
 
-namespace vera::core::input {
-
 enum class VeraKey : uint16_t {
     Unknown = 0,
 
@@ -139,5 +137,3 @@ enum class VeraKey : uint16_t {
 
     Count
 };
-
-}  // namespace vera::core::input

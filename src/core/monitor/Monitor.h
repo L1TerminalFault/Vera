@@ -4,8 +4,6 @@
 #include <optional>
 #include <string>
 
-namespace vera::core::monitor {
-
 struct VeraMonitorInfo {
     std::string name;
     int32_t x, y;
@@ -22,5 +20,3 @@ struct VeraDisplayModeInfo {
     uint32_t refreshRateHz;
     uint32_t bitsPerPixel;
 };
-
-}  // namespace vera::core::monitor

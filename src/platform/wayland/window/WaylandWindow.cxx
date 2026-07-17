@@ -10,14 +10,6 @@
 #include "platform/wayland/desktop/WaylandDecoration.hxx"
 #include "platform/wayland/input/WaylandJoystick.hxx"
 #include "platform/wayland/monitor/WaylandMonitor.hxx"
-#include "platform/wayland/window/WaylandState.hxx"
-
-namespace vera::wayland::window {
-
-using namespace input;
-using namespace monitor;
-using namespace desktop::decoration;
-using namespace cursor;
 
 static int createAnonymousFile(off_t size) {
     int fd = memfd_create("vera-shm", MFD_CLOEXEC);
@@ -86,7 +78,7 @@ static void xdgSurfaceHandleConfigure(void* data, xdg_surface* xdgSurface,
     wl_surface_commit(window->surface());
 }
 
-static const xdg_surface_listener kXdgSurfaceListener = {
+static const xdg_surface_listener KXDG_SURFACE_LISTENER = {
     .configure = xdgSurfaceHandleConfigure};
 
 static void xdgToplevelHandleConfigure(void* data, xdg_toplevel* xdgToplevel,
@@ -103,7 +95,7 @@ static void xdgToplevelHandleClose(void* data, xdg_toplevel* xdgToplevel) {
     window->handleWmCloseRequest();
 }
 
-static const xdg_toplevel_listener kXdgToplevelListener = {
+static const xdg_toplevel_listener KXDG_TOP_LEVEL_LISTENER = {
     .configure = xdgToplevelHandleConfigure,
     .close = xdgToplevelHandleClose,
     .configure_bounds = nullptr,
@@ -128,10 +120,10 @@ void WaylandWindow::initSurface(const VeraWindowInfo& info) {
     m_ctx.windowsBySurface[m_surface] = this;
 
     m_xdgSurface = xdg_wm_base_get_xdg_surface(m_ctx.wmBase, m_surface);
-    xdg_surface_add_listener(m_xdgSurface, &kXdgSurfaceListener, this);
+    xdg_surface_add_listener(m_xdgSurface, &KXDG_SURFACE_LISTENER, this);
 
     m_xdgToplevel = xdg_surface_get_toplevel(m_xdgSurface);
-    xdg_toplevel_add_listener(m_xdgToplevel, &kXdgToplevelListener, this);
+    xdg_toplevel_add_listener(m_xdgToplevel, &KXDG_TOP_LEVEL_LISTENER, this);
 
     xdg_toplevel_set_title(m_xdgToplevel, info.title.c_str());
     xdg_toplevel_set_app_id(m_xdgToplevel, "VeraEngine");
@@ -311,7 +303,7 @@ void WaylandWindow::setCursorShape(VeraCursorShape shape) {
 }
 
 VeraMonitorInfo WaylandWindow::getCurrentMonitor() const {
-    return getPrimaryMonitor(m_ctx);
+    return monitor::getPrimaryMonitor(m_ctx);
 }
 
 void WaylandWindow::handleConfigure(int32_t width, int32_t height,
@@ -319,11 +311,11 @@ void WaylandWindow::handleConfigure(int32_t width, int32_t height,
     m_isResizing = false;
 
     if (states && states->size > 0) {
-        const auto* data_begin = static_cast<const uint32_t*>(states->data);
-        const size_t num_elements = states->size / sizeof(uint32_t);
+        const auto* dataBegin = static_cast<const uint32_t*>(states->data);
+        const size_t numElements = states->size / sizeof(uint32_t);
 
-        for (size_t i = 0; i < num_elements; ++i) {
-            if (data_begin[i] == XDG_TOPLEVEL_STATE_RESIZING) {
+        for (size_t i = 0; i < numElements; ++i) {
+            if (dataBegin[i] == XDG_TOPLEVEL_STATE_RESIZING) {
                 m_isResizing = true;
                 break;
             }
@@ -364,16 +356,16 @@ void WaylandWindow::setFallbackBuffer(wl_buffer* buffer) {
 void WaylandWindow::setJoystickButtonCallback(
     VeraJoystickButtonCallback callback) {
     m_joyButtonCallback = callback;
-    setButtonCallback([this](uint32_t id, uint32_t btn, bool pressed) {
-        if (m_joyButtonCallback) m_joyButtonCallback(id, btn, pressed);
-    });
+    waylandjoystick::setButtonCallback(
+        [this](uint32_t id, uint32_t btn, bool pressed) {
+            if (m_joyButtonCallback) m_joyButtonCallback(id, btn, pressed);
+        });
 }
 
 void WaylandWindow::setJoystickAxisCallback(VeraJoystickAxisCallback callback) {
     m_joyAxisCallback = callback;
-    setAxisCallback([this](uint32_t id, uint32_t axis, float val) {
-        if (m_joyAxisCallback) m_joyAxisCallback(id, axis, val);
-    });
+    waylandjoystick::setAxisCallback(
+        [this](uint32_t id, uint32_t axis, float val) {
+            if (m_joyAxisCallback) m_joyAxisCallback(id, axis, val);
+        });
 }
-
-}  // namespace vera::wayland::window

@@ -4,12 +4,8 @@
 #include "platform/wayland/internal/protocols/relative-pointer-unstable-v1-client-protocol.h"
 #include "platform/wayland/window/WaylandWindow.hxx"
 
-namespace vera::wayland::inputconstraints {
-
-using namespace internal;
-
-inline static zwp_locked_pointer_v1* s_lockedPointer = nullptr;
-inline static zwp_relative_pointer_v1* s_relativePointer = nullptr;
+inline static zwp_locked_pointer_v1* sLockedPointer = nullptr;
+inline static zwp_relative_pointer_v1* sRelativePointer = nullptr;
 
 static void relativePointerHandleMotion(
     void* data, zwp_relative_pointer_v1* relativePointer, uint32_t time_hi,
@@ -30,7 +26,7 @@ static void relativePointerHandleMotion(
     }
 }
 
-static const zwp_relative_pointer_v1_listener kRelativePointerListener = {
+static const zwp_relative_pointer_v1_listener KRELATIVE_POINTER_LISTENER = {
     .relative_motion = relativePointerHandleMotion};
 
 static void lockedPointerHandleLocked(void* data,
@@ -51,21 +47,21 @@ static void lockedPointerHandleUnlocked(void* data,
 #endif
 }
 
-static const zwp_locked_pointer_v1_listener kLockedPointerListener = {
+static const zwp_locked_pointer_v1_listener KLOCKED_POINTER_LISTENER = {
     .locked = lockedPointerHandleLocked,
     .unlocked = lockedPointerHandleUnlocked};
 
 void unlockPointer(WaylandContext& ctx) {
     (void)ctx;
 
-    if (s_relativePointer) {
-        zwp_relative_pointer_v1_destroy(s_relativePointer);
-        s_relativePointer = nullptr;
+    if (sRelativePointer) {
+        zwp_relative_pointer_v1_destroy(sRelativePointer);
+        sRelativePointer = nullptr;
     }
 
-    if (s_lockedPointer) {
-        zwp_locked_pointer_v1_destroy(s_lockedPointer);
-        s_lockedPointer = nullptr;
+    if (sLockedPointer) {
+        zwp_locked_pointer_v1_destroy(sLockedPointer);
+        sLockedPointer = nullptr;
     }
 }
 
@@ -77,22 +73,20 @@ void lockPointer(WaylandContext& ctx, wl_surface* surface) {
 
     unlockPointer(ctx);
 
-    s_lockedPointer = zwp_pointer_constraints_v1_lock_pointer(
+    sLockedPointer = zwp_pointer_constraints_v1_lock_pointer(
         ctx.pointerConstraints, surface, ctx.pointer, nullptr,
         ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_PERSISTENT);
 
-    if (s_lockedPointer) {
-        zwp_locked_pointer_v1_add_listener(s_lockedPointer,
-                                           &kLockedPointerListener, &ctx);
+    if (sLockedPointer) {
+        zwp_locked_pointer_v1_add_listener(sLockedPointer,
+                                           &KLOCKED_POINTER_LISTENER, &ctx);
     }
 
-    s_relativePointer = zwp_relative_pointer_manager_v1_get_relative_pointer(
+    sRelativePointer = zwp_relative_pointer_manager_v1_get_relative_pointer(
         ctx.relativePointerManager, ctx.pointer);
 
-    if (s_relativePointer) {
-        zwp_relative_pointer_v1_add_listener(s_relativePointer,
-                                             &kRelativePointerListener, &ctx);
+    if (sRelativePointer) {
+        zwp_relative_pointer_v1_add_listener(sRelativePointer,
+                                             &KRELATIVE_POINTER_LISTENER, &ctx);
     }
 }
-
-}  // namespace vera::wayland::inputconstraints

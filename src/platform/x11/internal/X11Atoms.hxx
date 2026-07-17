@@ -2,8 +2,6 @@
 
 #include "platform/x11/internal/X11Internal.hxx"
 
-namespace vera::x11::internal {
-
 static Atom intern(Display* d, const char* name) {
     return XInternAtom(d, name, False);
 }
@@ -54,5 +52,3 @@ void internAll(X11Context& ctx) {
 
     a.xSettingsSettings = intern(d, "_XSETTINGS_SETTINGS");
 }
-
-}  // namespace vera::x11::internal

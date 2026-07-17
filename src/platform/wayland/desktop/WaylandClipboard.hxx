@@ -9,15 +9,13 @@
 
 #include "platform/wayland/internal/WaylandInternal.hxx"
 
-namespace vera::wayland::desktop::clipboard {
+namespace clipboard {
 
-using namespace internal;
-
-static std::string g_ClipboardDataStore = "";
+static std::string gClipboardDataStore = "";
 
 static const char* kTextMimeTypes[] = {"text/plain;charset=utf-8", "text/plain",
                                        "UTF8_STRING", "STRING"};
-constexpr size_t kMimeTypeCount =
+constexpr size_t KMIME_TYPE_COUNT =
     sizeof(kTextMimeTypes) / sizeof(kTextMimeTypes[0]);
 
 static void handleSourceTarget(void* data, wl_data_source* source,
@@ -33,7 +31,7 @@ static void handleSourceSend(void* data, wl_data_source* source,
     (void)source;
 
     bool typeMatches = false;
-    for (size_t i = 0; i < kMimeTypeCount; ++i) {
+    for (size_t i = 0; i < KMIME_TYPE_COUNT; ++i) {
         if (mime_type && std::strcmp(mime_type, kTextMimeTypes[i]) == 0) {
             typeMatches = true;
             break;
@@ -41,8 +39,8 @@ static void handleSourceSend(void* data, wl_data_source* source,
     }
 
     if (typeMatches && fd >= 0) {
-        ssize_t written = write(fd, g_ClipboardDataStore.c_str(),
-                                g_ClipboardDataStore.length());
+        ssize_t written = write(fd, gClipboardDataStore.c_str(),
+                                gClipboardDataStore.length());
         (void)written;
     }
     close(fd);
@@ -53,7 +51,7 @@ static void handleSourceCancelled(void* data, wl_data_source* source) {
     wl_data_source_destroy(source);
 }
 
-static const wl_data_source_listener kDataSourceListener = {
+static const wl_data_source_listener KDATA_SOURCE_LISTENER = {
     .target = handleSourceTarget,
     .send = handleSourceSend,
     .cancelled = handleSourceCancelled,
@@ -103,7 +101,7 @@ void setClipboardText(WaylandContext& ctx, const std::string& text) {
         return;
     }
 
-    g_ClipboardDataStore = text;
+    gClipboardDataStore = text;
 
     wl_data_source* source =
         wl_data_device_manager_create_data_source(ctx.dataDeviceManager);
@@ -111,11 +109,11 @@ void setClipboardText(WaylandContext& ctx, const std::string& text) {
         return;
     }
 
-    for (size_t i = 0; i < kMimeTypeCount; ++i) {
+    for (size_t i = 0; i < KMIME_TYPE_COUNT; ++i) {
         wl_data_source_offer(source, kTextMimeTypes[i]);
     }
 
-    wl_data_source_add_listener(source, &kDataSourceListener, &ctx);
+    wl_data_source_add_listener(source, &KDATA_SOURCE_LISTENER, &ctx);
 
     wl_data_device_set_selection(ctx.dataDevice, source,
                                  ctx.lastPointerButtonSerial);
@@ -125,4 +123,4 @@ bool hasClipboardText(const WaylandContext& ctx) {
     return ctx.activeClipboardOffer != nullptr;
 }
 
-}  // namespace vera::wayland::desktop::clipboard
+}  // namespace clipboard

@@ -7,19 +7,17 @@
 #include "core/monitor/Monitor.h"
 #include "platform/x11/internal/X11Internal.hxx"
 
-namespace vera::x11::monitor {
+namespace monitor {
 
-bool initialize(internal::X11Context& ctx);
+bool initialize(X11Context& ctx);
 
-std::vector<core::monitor::VeraMonitorInfo> getMonitors(
-    internal::X11Context& ctx);
+std::vector<VeraMonitorInfo> getMonitors(X11Context& ctx);
 
-core::monitor::VeraMonitorInfo getPrimaryMonitor(internal::X11Context& ctx);
+VeraMonitorInfo getPrimaryMonitor(X11Context& ctx);
 
-core::monitor::VeraMonitorInfo getMonitorAt(internal::X11Context& ctx,
-                                            int32_t x, int32_t y);
+VeraMonitorInfo getMonitorAt(X11Context& ctx, int32_t x, int32_t y);
 
-std::vector<core::monitor::VeraDisplayModeInfo> getSupportedDisplayModes(
-    internal::X11Context& ctx, const core::monitor::VeraMonitorInfo& monitor);
+std::vector<VeraDisplayModeInfo> getSupportedDisplayModes(
+    X11Context& ctx, const VeraMonitorInfo& monitor);
 
-}  // namespace vera::x11::monitor
+}  // namespace monitor

@@ -7,10 +7,6 @@
 #include "platform/wayland/internal/WaylandInternal.hxx"
 #include "platform/wayland/window/WaylandWindow.hxx"
 
-namespace vera::wayland::input {
-
-using namespace internal;
-
 static VeraKey translateKeysym(xkb_keysym_t sym) {
     switch (sym) {
         case XKB_KEY_Escape:
@@ -225,7 +221,7 @@ static void keyboardHandleRepeatInfo(void* data, wl_keyboard* keyboard,
     (void)delay;
 }
 
-static const wl_keyboard_listener kKeyboardListener = {
+static const wl_keyboard_listener KKEYBOARD_LISTENER = {
     .keymap = keyboardHandleKeymap,
     .enter = keyboardHandleEnter,
     .leave = keyboardHandleLeave,
@@ -235,8 +231,6 @@ static const wl_keyboard_listener kKeyboardListener = {
 
 void addListener(WaylandContext& ctx, wl_keyboard* keyboard) {
     if (keyboard) {
-        wl_keyboard_add_listener(keyboard, &kKeyboardListener, &ctx);
+        wl_keyboard_add_listener(keyboard, &KKEYBOARD_LISTENER, &ctx);
     }
 }
-
-}  // namespace vera::wayland::input

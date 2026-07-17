@@ -3,14 +3,11 @@
 #include <dwmapi.h>
 #include <shellscalingapi.h>
 #include <windowsx.h>
-#include "core/monitor/Monitor.h"
 
 #include <string>
 #include <vector>
 
-using namespace vera::core::input;
-
-namespace vera::win32 {
+#include "core/monitor/Monitor.h"
 
 static std::wstring utf8ToWstring(const std::string& s) {
     if (s.empty()) return std::wstring{};
@@ -826,7 +823,8 @@ void VeraWin32Window::setCursorShape(VeraCursorShape shape) {
     }
 }
 
-vera::core::monitor::VeraMonitorInfo VeraWin32Window::getCurrentMonitor() const {
+vera::core::monitor::VeraMonitorInfo VeraWin32Window::getCurrentMonitor()
+    const {
     vera::core::monitor::VeraMonitorInfo info{};
     if (!m_hwnd) {
         return info;
@@ -1147,5 +1145,3 @@ void VeraWin32Window::setDestroyedNotifier(
     std::function<void(VeraWindowHandle)> notifier) {
     m_destroyedNotifier = std::move(notifier);
 };
-
-}

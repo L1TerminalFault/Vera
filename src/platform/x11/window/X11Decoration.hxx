@@ -1,18 +1,16 @@
 #pragma once
 #include <X11/Xlib.h>
 
+#include <cstdint>
+
 #include "core/window/WindowTypes.h"
 #include "platform/x11/internal/X11Internal.hxx"
-
-namespace vera::x11::window {
-
-using namespace internal;
 
 struct MotifWmHints {
     ulong flags;
     ulong functions;
     ulong decorations;
-    long inputMode;
+    int64_t inputMode;
     ulong status;
 };
 
@@ -39,24 +37,25 @@ void handleTitlebarButtonPress(X11Context& ctx, Window window,
                                const VeraHitTestRegions& regions,
                                int32_t clickX, int32_t clickY) {
     if (!regions.dragRegion ||
-        !pointInRect(clickX, clickY, *regions.dragRegion))
+        !pointInRect(clickX, clickY, *regions.dragRegion)) {
         return;
+    }
 
-    // Don't start a WM-driven move if the click actually landed on one of
-    // the caption buttons drawn on top of the drag region.
     if (regions.minimizeButton &&
-        pointInRect(clickX, clickY, *regions.minimizeButton))
+        pointInRect(clickX, clickY, *regions.minimizeButton)) {
         return;
+    }
     if (regions.maximizeButton &&
-        pointInRect(clickX, clickY, *regions.maximizeButton))
+        pointInRect(clickX, clickY, *regions.maximizeButton)) {
         return;
+    }
     if (regions.closeButton &&
-        pointInRect(clickX, clickY, *regions.closeButton))
+        pointInRect(clickX, clickY, *regions.closeButton)) {
         return;
+    }
 
-    constexpr long MOVERESIZE_MOVE = 8;
+    constexpr int64_t moveResizeMove = 8;
 
-    // _NET_WM_MOVERESIZE wants root-relative pointer coordinates.
     Window child;
     int rootX = 0, rootY = 0, winX = 0, winY = 0;
     unsigned int mask;
@@ -71,7 +70,7 @@ void handleTitlebarButtonPress(X11Context& ctx, Window window,
     event.xclient.format = 32;
     event.xclient.data.l[0] = rootX;
     event.xclient.data.l[1] = rootY;
-    event.xclient.data.l[2] = MOVERESIZE_MOVE;
+    event.xclient.data.l[2] = moveResizeMove;
     event.xclient.data.l[3] = Button1;
     event.xclient.data.l[4] = 1;
 
@@ -79,5 +78,3 @@ void handleTitlebarButtonPress(X11Context& ctx, Window window,
     XSendEvent(ctx.display, ctx.root, False,
                SubstructureRedirectMask | SubstructureNotifyMask, &event);
 }
-
-}  // namespace vera::x11::window

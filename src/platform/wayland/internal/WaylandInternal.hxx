@@ -15,13 +15,7 @@
 #include "platform/wayland/internal/protocols/xdg-output-unstable-v1-client-protocol.h"
 #include "platform/wayland/internal/protocols/xdg-shell-client-protocol.h"
 
-namespace vera::wayland::window {
 class WaylandWindow;
-}
-
-namespace vera::wayland::internal {
-
-using namespace window;
 
 struct WaylandOutputInfo {
     wl_output* output = nullptr;
@@ -87,9 +81,7 @@ struct WaylandContext {
     bool isSuspended = false;
 
     uint64_t allocateHandle() {
-        static uint64_t s_handleCounter = 0;
-        return ++s_handleCounter;
+        static uint64_t sHandleCounter = 0;
+        return ++sHandleCounter;
     }
 };
-
-}  // namespace vera::wayland::internal

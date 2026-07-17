@@ -1,4 +1,5 @@
 #pragma once
+
 #include <functional>
 #include <string>
 
@@ -8,11 +9,6 @@
 #include "core/monitor/Monitor.h"
 #include "core/platform/NativeHandle.h"
 #include "core/window/WindowTypes.h"
-
-namespace vera::core::window {
-
-using namespace input;
-using namespace monitor;
 
 class VeraWindow {
    public:
@@ -74,5 +70,3 @@ class VeraWindow {
         VeraJoystickButtonCallback callback) = 0;
     virtual void setJoystickAxisCallback(VeraJoystickAxisCallback callback) = 0;
 };
-
-}  // namespace vera::core::window

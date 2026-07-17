@@ -3,10 +3,6 @@
 #include "core/platform/IPlatformBackend.h"
 #include "platform/wayland/internal/WaylandInternal.hxx"
 
-namespace vera::wayland {
-
-using namespace internal;
-
 class WaylandBackend : public IPlatformBackend {
    public:
     WaylandBackend() = default;
@@ -48,10 +44,6 @@ class WaylandBackend : public IPlatformBackend {
     WaylandContext& getContext() { return m_ctx; }
     const WaylandContext& getContext() const { return m_ctx; }
 
-    void setJoystickButtonCallback(
-        VeraJoystickButtonCallback callback) override;
-    void setJoystickAxisCallback(VeraJoystickAxisCallback callback) override;
-
    private:
     mutable WaylandContext m_ctx;
 
@@ -59,5 +51,3 @@ class WaylandBackend : public IPlatformBackend {
     std::function<void()> m_displayChangeCallback;
     std::function<void(VeraSystemTheme)> m_systemThemeChangeCallback;
 };
-
-}  // namespace vera::wayland
