@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 
-#include "core/app/app.h"
+#include "core/app/App.h"
 
 int main() {
     VeraAppInfo app_info{};
@@ -39,8 +39,7 @@ int main() {
         VeraHitTestRegions regions{};
         regions.dragRegion = VeraRect{0, 0, 600, 40};
         regions.minimizeButton = VeraRect{600 - 135, 0, 45, 40};
-        regions.maximizeButton =
-            VeraRect{600 - 90, 0, 45, 40}; 
+        regions.maximizeButton = VeraRect{600 - 90, 0, 45, 40};
         regions.closeButton = VeraRect{600 - 45, 0, 45, 40};
         window->setTitlebarHitTestRegions(regions);
 
@@ -59,6 +58,7 @@ int main() {
         window->setCloseRequestCallback([&app, window]() -> bool {
             std::cout << "[Instance " << window->getHandle().value
                       << "] Close request approved." << std::endl;
+            app.destroyWindow(window);
             return true;
         });
 
@@ -71,7 +71,6 @@ int main() {
                 }
             });
     }
-
 
     while (app.getWindowCount() > 0) {
         app.pollEvents();
