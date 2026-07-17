@@ -12,7 +12,7 @@ namespace vera::core::platform {
 std::unique_ptr<IPlatformBackend> create(const VeraAppInfo& info) {
 #if defined(_WIN32)
     (void)info;
-    return std::make_unique<Win32Backend>();
+    return std::make_unique<win32::Win32Backend>();
 #else
     VeraLinuxProtocol protocol = info.preferedLinuxProtocol;
 

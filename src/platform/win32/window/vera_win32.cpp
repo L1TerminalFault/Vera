@@ -3,9 +3,14 @@
 #include <dwmapi.h>
 #include <shellscalingapi.h>
 #include <windowsx.h>
+#include "core/monitor/Monitor.h"
 
 #include <string>
 #include <vector>
+
+using namespace vera::core::input;
+
+namespace vera::win32 {
 
 static std::wstring utf8ToWstring(const std::string& s) {
     if (s.empty()) return std::wstring{};
@@ -301,9 +306,6 @@ void VeraWin32Window::calculateWindowDimensions(const VeraWindowInfo& info,
         x = targetArea.left + (monitorWidth - width) / 2;
         y = targetArea.top + (monitorHeight - height) / 2;
     } else {
-        // CW_USEDEFAULT is only sensible for overlapped windows
-        // (WS_OVERLAPPED). For popup windows we should use absolute positions
-        // relative to the monitor.
         if (info.x.has_value()) {
             x = static_cast<int>(*info.x);
         } else {
@@ -786,7 +788,7 @@ void VeraWin32Window::setCursorMode(VeraCursorMode mode) {
 void VeraWin32Window::setCursorShape(VeraCursorShape shape) {
     m_cursor_shape = shape;
 
-    LPCWSTR win32CursorId = IDC_ARROW;  // default
+    LPCWSTR win32CursorId = IDC_ARROW;
     switch (shape) {
         case VeraCursorShape::IBeam:
             win32CursorId = IDC_IBEAM;
@@ -818,15 +820,14 @@ void VeraWin32Window::setCursorShape(VeraCursorShape shape) {
 
     m_current_hcursor = LoadCursorW(nullptr, win32CursorId);
 
-    // apply immediately if this window is foreground
     if (m_hwnd && GetForegroundWindow() == m_hwnd) {
         SetCursor(m_current_hcursor ? m_current_hcursor
                                     : LoadCursorW(nullptr, IDC_ARROW));
     }
 }
 
-VeraMonitorInfo VeraWin32Window::getCurrentMonitor() const {
-    VeraMonitorInfo info{};
+vera::core::monitor::VeraMonitorInfo VeraWin32Window::getCurrentMonitor() const {
+    vera::core::monitor::VeraMonitorInfo info{};
     if (!m_hwnd) {
         return info;
     }
@@ -1030,7 +1031,7 @@ LRESULT VeraWin32Window::handleMessage(UINT msg, WPARAM wparam, LPARAM lparam) {
             return 0;
         }
         case WM_ERASEBKGND: {
-            return 1; 
+            return 1;
         }
 
         case WM_SETCURSOR: {
@@ -1054,7 +1055,6 @@ LRESULT VeraWin32Window::handleMessage(UINT msg, WPARAM wparam, LPARAM lparam) {
             int y = GET_Y_LPARAM(lparam);
             POINT pt = {x, y};
             ScreenToClient(m_hwnd, &pt);
-
 
             const int32_t mouseX = static_cast<int32_t>(pt.x);
             const int32_t mouseY = static_cast<int32_t>(pt.y);
@@ -1143,7 +1143,9 @@ LRESULT VeraWin32Window::handleMessage(UINT msg, WPARAM wparam, LPARAM lparam) {
     return DefWindowProcW(m_hwnd, msg, wparam, lparam);
 }
 
- void VeraWin32Window::setDestroyedNotifier(
+void VeraWin32Window::setDestroyedNotifier(
     std::function<void(VeraWindowHandle)> notifier) {
     m_destroyedNotifier = std::move(notifier);
- };
+};
+
+}

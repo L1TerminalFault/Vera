@@ -1,4 +1,5 @@
-#include "core/app/types.h"
+#include "core/window/Window.h"
+#include "core/window/WindowTypes.h"
 
 #if defined(VERA_PLATFORM_WIN32)
 #pragma once
@@ -8,11 +9,13 @@
 
 #include <atomic>
 
-#include "core/window/window.h"
+namespace vera::win32 {
 
-class VeraWin32Window : public VeraWindow {
+using namespace core::input;
+
+class VeraWin32Window : public core::window::VeraWindow {
    public:
-    VeraWin32Window(const VeraWindowInfo& info);
+    explicit VeraWin32Window(const VeraWindowInfo& info);
     ~VeraWin32Window() override;
 
     VeraWindowHandle getHandle() const override { return m_handle; }
@@ -61,9 +64,13 @@ class VeraWin32Window : public VeraWindow {
     void setCursorMode(VeraCursorMode mode) override;
     void setCursorShape(VeraCursorShape shape) override;
 
-    VeraMonitorInfo getCurrentMonitor() const override;
-    void setDestroyedNotifier(
-        std::function<void(VeraWindowHandle)> notifier) override;
+    core::monitor::VeraMonitorInfo getCurrentMonitor() const override;
+    void setDestroyedNotifier(std::function<void(VeraWindowHandle)> notifier);
+
+    virtual void setJoystickButtonCallback(
+        VeraJoystickButtonCallback callback) override {};
+    virtual void setJoystickAxisCallback(
+        VeraJoystickAxisCallback callback) override {};
 
    private:
     VeraWindowHandle generateUniqueHandle();
@@ -120,5 +127,7 @@ class VeraWin32Window : public VeraWindow {
 
     std::function<void(VeraWindowHandle)> m_destroyedNotifier;
 };
+
+}  // namespace vera::win32
 
 #endif

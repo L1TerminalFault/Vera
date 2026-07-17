@@ -1,4 +1,3 @@
-#include "core/app/types.h"  // To get your platform macros
 
 #if defined(_WIN32)
 
@@ -8,11 +7,7 @@
 namespace vera::internal {
 
 void pollPlatformEvents() {
-    MSG msg;
-    while (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE)) {
-        TranslateMessage(&msg);
-        DispatchMessageW(&msg);
-    }
+   
 }
 
 void waitPlatformEvents() {
