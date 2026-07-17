@@ -1,4 +1,9 @@
 ﻿/.vs
 /out/build/x64-Debug
+<<<<<<< Updated upstream
 /build
 
+=======
+/out
+/build
+>>>>>>> Stashed changes
