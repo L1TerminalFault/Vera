@@ -504,7 +504,3 @@ VeraMonitorInfo VeraWin32Window::getCurrentMonitor() const {
     return info;
 }
 
-void VeraWin32Window::setDestroyedNotifier(
-    std::function<void(VeraWindowHandle)> notifier) {
-    m_destroyedNotifier = std::move(notifier);
-};

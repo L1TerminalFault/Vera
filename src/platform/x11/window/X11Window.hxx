@@ -69,8 +69,6 @@ class X11Window : public VeraWindow {
     virtual void setJoystickAxisCallback(
         VeraJoystickAxisCallback callback) override;
     
-    //TODO: @kaleab impl this for x11 and you will find this in wayland too
-    void setDestructionCallback(std::function<void(VeraWindow*)> callback) override{};
     
     Window xid() const { return m_xid; }
     void handleXEvent(XEvent& event);
