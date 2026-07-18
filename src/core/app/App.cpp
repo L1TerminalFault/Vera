@@ -34,6 +34,9 @@ std::expected<VeraWindow*, VeraError> VeraApp::createWindow(
     if (!result) return std::unexpected(result.error());
 
     VeraWindow* raw = result->get();
+     window->setDestroyedNotifier([this, handle](VeraWindowHandle) {
+        m_pendingDestroyed.push_back(handle);
+    });
     raw->setDestructionCallback([this](VeraWindow* windowToDelete) {
         this->destroyWindow(windowToDelete);
     });
@@ -64,6 +67,10 @@ std::vector<VeraWindow*> VeraApp::getAllWindows() const {
 
 void VeraApp::pollEvents() {
     if (m_backend) m_backend->pollEvents();
+     for (VeraWindowHandle handle : m_pendingDestroyed) {
+        std::erase_if(m_windows, [handle](const auto& win) { return win->getHandle() == handle; });
+    }
+    m_pendingDestroyed.clear();
 }
 void VeraApp::waitEvents() {
     if (m_backend) m_backend->waitEvents();
