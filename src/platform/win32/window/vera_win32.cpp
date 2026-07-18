@@ -2,15 +2,15 @@
 
 #include <shellscalingapi.h>
 #include <windowsx.h>
+
 #include <bit>
 #include <string>
 #include <vector>
-#include "platform/win32/utils/win32_utils.h"
-#include "platform/win32/utils/keyTranslationMap.h"
-#include "platform/win32/utils/windowCreationUtils.h"
 
 #include "core/monitor/Monitor.h"
-
+#include "platform/win32/utils/keyTranslationMap.h"
+#include "platform/win32/utils/win32_utils.h"
+#include "platform/win32/utils/windowCreationUtils.h"
 
 void VeraWin32Window::createNativeWindow(const VeraWindowInfo& info,
                                          DWORD style, DWORD ex_style, int x,
@@ -22,8 +22,9 @@ void VeraWin32Window::createNativeWindow(const VeraWindowInfo& info,
         return;
     }
     std::wstring wideTitle(info.title.begin(), info.title.end());
-    m_hwnd = CreateWindowExW(ex_style, className, wideTitle.c_str(), style, x, y,
-                             width, height, nullptr, nullptr, instance, this);
+    m_hwnd =
+        CreateWindowExW(ex_style, className, wideTitle.c_str(), style, x, y,
+                        width, height, nullptr, nullptr, instance, this);
     if (!m_hwnd) {
         return;
     }
@@ -39,8 +40,6 @@ void VeraWin32Window::createNativeWindow(const VeraWindowInfo& info,
                          SWP_FRAMECHANGED);
     }
 }
-
-
 
 VeraWin32Window::VeraWin32Window(const VeraWindowInfo& info) {
     m_handle = utils::generateUniqueHandle();
@@ -59,6 +58,9 @@ VeraWin32Window::VeraWin32Window(const VeraWindowInfo& info) {
 }
 
 VeraWin32Window::~VeraWin32Window() {
+    if (m_destruction_callback) {
+        m_destruction_callback(this);
+    }
     if (m_hwnd) {
         DestroyWindow(m_hwnd);
         m_hwnd = nullptr;
@@ -457,8 +459,7 @@ void VeraWin32Window::setCursorShape(VeraCursorShape shape) {
     }
 }
 
-VeraMonitorInfo VeraWin32Window::getCurrentMonitor()
-    const {
+VeraMonitorInfo VeraWin32Window::getCurrentMonitor() const {
     VeraMonitorInfo info{};
     if (!m_hwnd) {
         return info;
@@ -502,7 +503,6 @@ VeraMonitorInfo VeraWin32Window::getCurrentMonitor()
 
     return info;
 }
-
 
 void VeraWin32Window::setDestroyedNotifier(
     std::function<void(VeraWindowHandle)> notifier) {

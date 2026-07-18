@@ -57,9 +57,6 @@ LRESULT VeraWin32Window::handleMessage(UINT msg, WPARAM wparam, LPARAM lparam) {
 
         case WM_DESTROY: {
             m_hwnd = nullptr;
-            if (m_destruction_callback) {
-                m_destruction_callback(this);
-            }
             notifyDestroyed();
             return 0;
         }
