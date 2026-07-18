@@ -197,7 +197,7 @@ static void keyboardHandleKey(void* data, wl_keyboard* keyboard,
     }
 
     if (pressed) {
-        KeyRepeatState repeatState{};
+        KeyRepeatStateWayland repeatState{};
         repeatState.key = key;
         repeatState.veraKey = veraKey;
         repeatState.scanCode = scanCode;

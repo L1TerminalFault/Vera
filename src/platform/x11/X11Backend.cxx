@@ -217,6 +217,7 @@ VeraNativeHandle X11Backend::getNativeHandle() const {
     return handle;
 }
 
-void X11Backend::applySettings(VeraSettings) {
-    // m_ctx.
+void X11Backend::applySettings(VeraSettings settings) {
+    m_ctx.keyRepeatDelay = settings.keyRepeatSettings.delayMs;
+    m_ctx.keyRepeatRate = settings.keyRepeatSettings.rate;
 }

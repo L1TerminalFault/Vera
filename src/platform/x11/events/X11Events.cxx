@@ -71,6 +71,30 @@ static void dispatchOne(X11Context& ctx, XEvent& event,
     }
 }
 
+static void processKeyRepeat(X11Context* ctx) {
+    if (ctx->keyRepeatRate == 0 || ctx->pressedKeys.empty()) {
+        return;
+    }
+
+    auto now = std::chrono::steady_clock::now();
+
+    for (auto& [key, repeatState] : ctx->pressedKeys) {
+        if (now >= repeatState.nextRepeat) {
+            auto it = ctx->windowsByXid.find(repeatState.window);
+            if (it != ctx->windowsByXid.end()) {
+                auto* window = it->second;
+
+                if (window && window->getKeyCallback()) {
+                    window->getKeyCallback()(repeatState.veraKey, true, true);
+                }
+            }
+
+            repeatState.nextRepeat =
+                now + std::chrono::milliseconds(1000 / ctx->keyRepeatRate);
+        }
+    }
+}
+
 void pollEventsX11(X11Context& ctx,
                    const std::function<bool()>& quitRequestCallback,
                    const std::function<void()>& displayChangeCallback) {
@@ -78,11 +102,14 @@ void pollEventsX11(X11Context& ctx,
         int errorBase;
         XRRQueryExtension(ctx.display, &gRandrEventBase, &errorBase);
     }
+
     while (XPending(ctx.display) > 0) {
         XEvent event;
         XNextEvent(ctx.display, &event);
         dispatchOne(ctx, event, quitRequestCallback, displayChangeCallback);
     }
+
+    processKeyRepeat(&ctx);
 }
 
 void waitForEventsX11(X11Context& ctx,

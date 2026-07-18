@@ -10,7 +10,7 @@ int main() {
     appInfo.enablePlatformDebugging = true;
 
     VeraApp app(appInfo);
-    VeraSettings settings({{.delayMs = 1000, .rate = 5}});
+    VeraSettings settings({{.delayMs = 550, .rate = 5}});
     app.applySettings(settings);
 
     std::vector<VeraWindow*> activeWindows;

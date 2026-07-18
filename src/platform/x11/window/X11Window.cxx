@@ -306,3 +306,8 @@ void X11Window::handleXEvent(XEvent& event) {
             break;
     }
 }
+
+void X11Window::setDestructionCallback(
+    std::function<void(VeraWindow*)> callback) {
+    (void)callback;
+}

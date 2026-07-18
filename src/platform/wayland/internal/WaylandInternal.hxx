@@ -33,7 +33,7 @@ struct WaylandOutputInfo {
     bool isPrimary = false;
 };
 
-struct KeyRepeatState {
+struct KeyRepeatStateWayland {
     uint32_t key;
     uint32_t scanCode;
     VeraKey veraKey;
@@ -60,7 +60,7 @@ struct WaylandContext {
     uint32_t keyRepeatRate = 0;
     uint32_t keyRepeatDelay = 0;
 
-    std::unordered_map<uint32_t, KeyRepeatState> pressedKeys;
+    std::unordered_map<uint32_t, KeyRepeatStateWayland> pressedKeys;
 
     xkb_context* xkbContext = nullptr;
     xkb_keymap* xkbKeymap = nullptr;

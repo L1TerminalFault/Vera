@@ -395,3 +395,8 @@ void WaylandWindow::setJoystickAxisCallback(VeraJoystickAxisCallback callback) {
             if (m_joyAxisCallback) m_joyAxisCallback(id, axis, val);
         });
 }
+
+void WaylandWindow::setDestructionCallback(
+    std::function<void(VeraWindow*)> callback) {
+    (void)callback;
+}
