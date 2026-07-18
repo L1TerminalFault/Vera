@@ -3,6 +3,8 @@
 #include <optional>
 #include <string>
 
+enum class VeraThemeMode : uint8_t { Light = 0, Dark };
+
 struct VeraRect {
     uint32_t x = 0;
     uint32_t y = 0;

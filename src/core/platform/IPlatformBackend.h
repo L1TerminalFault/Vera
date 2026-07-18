@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "core/app/AppInfo.h"
+#include "core/app/AppSettings.h"
 #include "core/app/Error.h"
 #include "core/monitor/Monitor.h"
 #include "core/platform/NativeHandle.h"
@@ -46,4 +47,5 @@ class IPlatformBackend {
     virtual VeraSystemTheme getSystemTheme() const = 0;
     virtual std::vector<VeraInputDeviceInfo> getInputDevices() const = 0;
     virtual VeraNativeHandle getNativeHandle() const = 0;
+    virtual void applySettings(VeraSettings) = 0;
 };

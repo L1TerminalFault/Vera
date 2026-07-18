@@ -7,10 +7,11 @@
 
 using KeyStateArray = std::array<bool, static_cast<size_t>(VeraKey::Count)>;
 
-void handleKeyPress(X11Context& ctx, XKeyEvent& event, KeyStateArray& state,
-                    const std::function<void(VeraKey, bool, bool)>& keyCallback,
-                    const std::function<void(uint32_t)>& charCallback);
+void handleKeyPressX11(
+    X11Context& ctx, XKeyEvent& event, KeyStateArray& state,
+    const std::function<void(VeraKey, bool, bool)>& keyCallback,
+    const std::function<void(uint32_t)>& charCallback);
 
-void handleKeyRelease(
+void handleKeyReleaseX11(
     X11Context& ctx, XKeyEvent& event, KeyStateArray& state,
     const std::function<void(VeraKey, bool, bool)>& keyCallback);

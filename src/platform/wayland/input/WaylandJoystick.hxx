@@ -3,17 +3,16 @@
 #include "core/input/Joystick.h"
 #include "platform/wayland/internal/WaylandInternal.hxx"
 
-namespace waylandjoystick {
+void setJoystickButtonCallbackWayland(
+    std::function<void(uint32_t, uint32_t, bool)> cb);
 
-void setButtonCallback(std::function<void(uint32_t, uint32_t, bool)> cb);
-void setAxisCallback(std::function<void(uint32_t, uint32_t, float)> cb);
+void setJoystickAxisCallbackWayland(
+    std::function<void(uint32_t, uint32_t, float)> cb);
 
-void initialize(WaylandContext& ctx);
+void initializeJoystickWayland(WaylandContext& ctx);
 
-void update(WaylandContext& ctx);
+void updateJoystickWayland(WaylandContext& ctx);
 
-VeraJoystickState getState(uint32_t joystickId);
+VeraJoystickState getStateJoystickWayland(uint32_t joystickId);
 
-void shutdown(WaylandContext& ctx);
-
-}  // namespace waylandjoystick
+void shutdownJoystickWayland(WaylandContext& ctx);

@@ -3,18 +3,16 @@
 #include "core/input/Joystick.h"
 #include "platform/x11/internal/X11Internal.hxx"
 
-namespace x11joystick {
+void setJoystickButtonCallbackX11(
+    std::function<void(uint32_t, uint32_t, bool)> cb);
 
-void setButtonCallback(std::function<void(uint32_t, uint32_t, bool)> cb);
+void setJoystickAxisCallbackX11(
+    std::function<void(uint32_t, uint32_t, float)> cb);
 
-void setAxisCallback(std::function<void(uint32_t, uint32_t, float)> cb);
+void initializeJoystickX11(X11Context& ctx);
 
-void initialize(X11Context& ctx);
+void updateJoystickX11(X11Context& ctx);
 
-void update(X11Context& ctx);
+VeraJoystickState getJoystickStateX11(uint32_t joystickId);
 
-VeraJoystickState getState(uint32_t joystickId);
-
-void shutdown(X11Context& ctx);
-
-}  // namespace x11joystick
+void shutdownJoystickX11(X11Context& ctx);

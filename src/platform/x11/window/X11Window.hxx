@@ -64,12 +64,19 @@ class X11Window : public VeraWindow {
 
     VeraMonitorInfo getCurrentMonitor() const override;
 
-    virtual void setJoystickButtonCallback(
+    void setJoystickButtonCallback(
         VeraJoystickButtonCallback callback) override;
-    virtual void setJoystickAxisCallback(
-        VeraJoystickAxisCallback callback) override;
-    
-    
+    void setJoystickAxisCallback(VeraJoystickAxisCallback callback) override;
+
+    void setDestructionCallback(
+        std::function<void(VeraWindow*)> callback) override;
+
+    const auto& getKeyCallback() const { return m_keyCallback; }
+    const auto& getCharCallback() const { return m_charCallback; }
+    const auto& getMouseButtonCallback() const { return m_mouseButtonCallback; }
+    const auto& getMouseMoveCallback() const { return m_mouseMoveCallback; }
+    const auto& getScrollCallback() const { return m_scrollCallback; }
+
     Window xid() const { return m_xid; }
     void handleXEvent(XEvent& event);
 

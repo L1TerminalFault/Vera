@@ -12,8 +12,6 @@
 #include <string>
 #include <vector>
 
-namespace x11joystick {
-
 struct JoystickDevice {
     int fd = -1;
     std::string devicePath;
@@ -24,14 +22,16 @@ static std::vector<JoystickDevice> gJoysticks(16);
 static std::function<void(uint32_t, uint32_t, bool)> gButtonCallback;
 static std::function<void(uint32_t, uint32_t, float)> gAxisCallback;
 
-void setButtonCallback(std::function<void(uint32_t, uint32_t, bool)> cb) {
+void setJoystickButtonCallbackX11(
+    std::function<void(uint32_t, uint32_t, bool)> cb) {
     gButtonCallback = cb;
 }
-void setAxisCallback(std::function<void(uint32_t, uint32_t, float)> cb) {
+void setJoystickAxisCallbackX11(
+    std::function<void(uint32_t, uint32_t, float)> cb) {
     gAxisCallback = cb;
 }
 
-void initialize(X11Context& ctx) {
+void initializeJoystickX11(X11Context& ctx) {
     (void)ctx;
 
     DIR* devDir = opendir("/dev/input");
@@ -74,7 +74,7 @@ void initialize(X11Context& ctx) {
     closedir(devDir);
 }
 
-void update(X11Context& ctx) {
+void updateJoystickX11(X11Context& ctx) {
     (void)ctx;
 
     for (size_t i = 0; i < gJoysticks.size(); ++i) {
@@ -114,12 +114,12 @@ void update(X11Context& ctx) {
     }
 }
 
-VeraJoystickState getState(uint32_t joystickId) {
+VeraJoystickState getJoystickStateX11(uint32_t joystickId) {
     if (joystickId < gJoysticks.size()) return gJoysticks[joystickId].state;
     return VeraJoystickState{};
 }
 
-void shutdown(X11Context& ctx) {
+void shutdownJoystickX11(X11Context& ctx) {
     (void)ctx;
     for (auto& joy : gJoysticks) {
         if (joy.fd >= 0) close(joy.fd);
@@ -127,5 +127,3 @@ void shutdown(X11Context& ctx) {
         joy.state.connected = false;
     }
 }
-
-}  // namespace x11joystick

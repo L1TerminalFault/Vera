@@ -1,15 +1,36 @@
 #pragma once
 
 #include <poll.h>
-#include <unistd.h>
 
 #include <functional>
 #include <iostream>
 
 #include "platform/wayland/internal/WaylandInternal.hxx"
+#include "platform/wayland/window/WaylandWindow.hxx"
 
-void poll(WaylandContext& ctx, const std::function<bool()>& quitRequestCallback,
-          const std::function<void()>& displayChangeCallback) {
+static void processKeyRepeat(WaylandContext* ctx) {
+    if (ctx->keyRepeatRate <= 0 || ctx->pressedKeys.empty()) {
+        return;
+    }
+
+    auto now = std::chrono::steady_clock::now();
+
+    for (auto& [key, repeatState] : ctx->pressedKeys) {
+        if (now >= repeatState.nextRepeat) {
+            if (ctx->focusedWindow && ctx->focusedWindow->getKeyCallback()) {
+                ctx->focusedWindow->getKeyCallback()(repeatState.veraKey, true,
+                                                     true);
+            }
+
+            repeatState.nextRepeat =
+                now + std::chrono::milliseconds(1000 / ctx->keyRepeatRate);
+        }
+    }
+}
+
+void pollEventsWayland(WaylandContext& ctx,
+                       const std::function<bool()>& quitRequestCallback,
+                       const std::function<void()>& displayChangeCallback) {
     (void)displayChangeCallback;
 
     if (!ctx.display) return;
@@ -22,7 +43,7 @@ void poll(WaylandContext& ctx, const std::function<bool()>& quitRequestCallback,
     int fd = wl_display_get_fd(ctx.display);
     struct pollfd pfd = {fd, POLLIN, 0};
 
-    int ret = ::poll(&pfd, 1, 0);
+    int ret = poll(&pfd, 1, 0);
 
     if (ret > 0 && (pfd.revents & POLLIN)) {
         wl_display_read_events(ctx.display);
@@ -31,6 +52,8 @@ void poll(WaylandContext& ctx, const std::function<bool()>& quitRequestCallback,
         wl_display_cancel_read(ctx.display);
     }
 
+    processKeyRepeat(&ctx);
+
     if (ctx.quitRequested && quitRequestCallback) {
         if (quitRequestCallback()) {
             ctx.quitRequested = false;
@@ -38,8 +61,9 @@ void poll(WaylandContext& ctx, const std::function<bool()>& quitRequestCallback,
     }
 }
 
-void wait(WaylandContext& ctx, const std::function<bool()>& quitRequestCallback,
-          const std::function<void()>& displayChangeCallback) {
+void waitForEventsWayland(WaylandContext& ctx,
+                          const std::function<bool()>& quitRequestCallback,
+                          const std::function<void()>& displayChangeCallback) {
     (void)displayChangeCallback;
 
     if (!ctx.display) return;
@@ -58,9 +82,10 @@ void wait(WaylandContext& ctx, const std::function<bool()>& quitRequestCallback,
     }
 }
 
-void waitTimeout(WaylandContext& ctx, double timeoutSeconds,
-                 const std::function<bool()>& quitRequestCallback,
-                 const std::function<void()>& displayChangeCallback) {
+void waitForEventsWithTimeoutWayland(
+    WaylandContext& ctx, double timeoutSeconds,
+    const std::function<bool()>& quitRequestCallback,
+    const std::function<void()>& displayChangeCallback) {
     (void)displayChangeCallback;
 
     if (!ctx.display) return;

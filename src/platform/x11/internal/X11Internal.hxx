@@ -3,10 +3,12 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include <chrono>
 #include <cstdint>
 #include <unordered_map>
 
-#include "core/window/WindowTypes.h"
+#include "core/app/Types.h"
+#include "core/input/Keys.h"
 
 class X11Window;
 
@@ -54,6 +56,14 @@ struct X11Atoms {
     Atom xSettingsSettings = 0;
 };
 
+struct KeyRepeatStateX11 {
+    Window window;
+    uint32_t key;
+    uint32_t scanCode;
+    VeraKey veraKey;
+    std::chrono::steady_clock::time_point nextRepeat;
+};
+
 struct X11Context {
     Display* display = nullptr;
     int screen = 0;
@@ -63,6 +73,11 @@ struct X11Context {
     XIM xim = nullptr;
 
     std::unordered_map<::Window, X11Window*> windowsByXid;
+
+    uint32_t keyRepeatRate = 0;
+    uint32_t keyRepeatDelay = 0;
+
+    std::unordered_map<uint32_t, KeyRepeatStateX11> pressedKeys;
 
     Window clipboardOwnerWindow = 0;
 

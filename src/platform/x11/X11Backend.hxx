@@ -1,7 +1,8 @@
 #pragma once
 
+#include "core/app/AppSettings.h"
+#include "core/app/Types.h"
 #include "core/platform/IPlatformBackend.h"
-#include "core/window/WindowTypes.h"
 #include "platform/x11/internal/X11Internal.hxx"
 
 class X11Backend : public IPlatformBackend {
@@ -40,6 +41,7 @@ class X11Backend : public IPlatformBackend {
     VeraSystemTheme getSystemTheme() const override;
     std::vector<VeraInputDeviceInfo> getInputDevices() const override;
     VeraNativeHandle getNativeHandle() const override;
+    void applySettings(VeraSettings) override;
 
    private:
     mutable X11Context m_ctx;

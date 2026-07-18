@@ -3,12 +3,12 @@
 #include <functional>
 #include <string>
 
+#include "core/app/Types.h"
 #include "core/input/Joystick.h"
 #include "core/input/Keys.h"
 #include "core/input/Mouse.h"
 #include "core/monitor/Monitor.h"
 #include "core/platform/NativeHandle.h"
-#include "core/window/WindowTypes.h"
 
 class VeraWindow {
    public:

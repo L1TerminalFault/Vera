@@ -4,11 +4,13 @@
 #include <wayland-cursor.h>
 #include <xkbcommon/xkbcommon.h>
 
+#include <chrono>
 #include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+#include "core/input/Keys.h"
 #include "platform/wayland/internal/protocols/pointer-constraints-unstable-v1-client-protocol.h"
 #include "platform/wayland/internal/protocols/relative-pointer-unstable-v1-client-protocol.h"
 #include "platform/wayland/internal/protocols/xdg-decoration-unstable-v1-client-protocol.h"
@@ -31,6 +33,13 @@ struct WaylandOutputInfo {
     bool isPrimary = false;
 };
 
+struct KeyRepeatStateWayland {
+    uint32_t key;
+    uint32_t scanCode;
+    VeraKey veraKey;
+    std::chrono::steady_clock::time_point nextRepeat;
+};
+
 struct WaylandContext {
     wl_display* display = nullptr;
     wl_registry* registry = nullptr;
@@ -48,6 +57,10 @@ struct WaylandContext {
     wl_pointer* pointer = nullptr;
     wl_keyboard* keyboard = nullptr;
     wl_data_device* dataDevice = nullptr;
+    uint32_t keyRepeatRate = 0;
+    uint32_t keyRepeatDelay = 0;
+
+    std::unordered_map<uint32_t, KeyRepeatStateWayland> pressedKeys;
 
     xkb_context* xkbContext = nullptr;
     xkb_keymap* xkbKeymap = nullptr;

@@ -3,6 +3,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xlocale.h>
 
+#include "core/app/AppSettings.h"
 #include "platform/x11/events/X11Events.hxx"
 #include "platform/x11/internal/X11XInput2.hxx"
 #include "platform/x11/internal/X11XKB.hxx"
@@ -36,14 +37,14 @@ bool X11Backend::initialize(const VeraAppInfo& info) {
     m_ctx.screen = DefaultScreen(m_ctx.display);
     m_ctx.root = RootWindow(m_ctx.display, m_ctx.screen);
 
-    internAll(m_ctx);
-    xkb::initialize(m_ctx);
-    m_hasXInput2 = xinput::initialize(m_ctx, m_xinput2Opcode);
-    monitor::initialize(m_ctx);
-    clipboard::initialize(m_ctx);
-    theme::initialize(m_ctx);
+    internAtomsX11(m_ctx);
+    initializeXKBX11(m_ctx);
+    m_hasXInput2 = initializeXInputX11(m_ctx, m_xinput2Opcode);
+    initializeMonitorX11(m_ctx);
+    initializeClipboardX11(m_ctx);
+    initializeThemeX11(m_ctx);
 
-    x11joystick::initialize(m_ctx);
+    initializeJoystickX11(m_ctx);
 
     if (info.enablePlatformDebugging) {
         XSynchronize(m_ctx.display, True);
@@ -54,7 +55,7 @@ bool X11Backend::initialize(const VeraAppInfo& info) {
 
 X11Backend::~X11Backend() {
     if (m_ctx.display) {
-        cursor::shutdown(m_ctx);
+        shutdownCursorX11(m_ctx);
         if (m_ctx.clipboardOwnerWindow) {
             XDestroyWindow(m_ctx.display, m_ctx.clipboardOwnerWindow);
         }
@@ -64,15 +65,15 @@ X11Backend::~X11Backend() {
             m_ctx.xim = nullptr;
         }
 
-        x11joystick::shutdown(m_ctx);
+        shutdownJoystickX11(m_ctx);
         XCloseDisplay(m_ctx.display);
     }
 }
 
 std::expected<std::unique_ptr<VeraWindow>, VeraError> X11Backend::createWindow(
     const VeraWindowInfo& info) {
-    VeraMonitorInfo targetMonitor = monitor::getPrimaryMonitor(m_ctx);
-    auto monitors = monitor::getMonitors(m_ctx);
+    VeraMonitorInfo targetMonitor = getPrimaryMonitorX11(m_ctx);
+    auto monitors = getMonitorsX11(m_ctx);
     if (info.monitorIndex >= 0 &&
         static_cast<size_t>(info.monitorIndex) < monitors.size()) {
         targetMonitor = monitors[static_cast<size_t>(info.monitorIndex)];
@@ -137,8 +138,8 @@ std::expected<std::unique_ptr<VeraWindow>, VeraError> X11Backend::createWindow(
 }
 
 void X11Backend::pollEvents() {
-    x11joystick::update(m_ctx);
-    poll(m_ctx, m_quitRequestCallback, m_displayChangeCallback);
+    updateJoystickX11(m_ctx);
+    pollEventsX11(m_ctx, m_quitRequestCallback, m_displayChangeCallback);
 
     auto it = m_ctx.windowsByXid.begin();
     while (it != m_ctx.windowsByXid.end()) {
@@ -154,12 +155,12 @@ void X11Backend::pollEvents() {
 }
 
 void X11Backend::waitEvents() {
-    wait(m_ctx, m_quitRequestCallback, m_displayChangeCallback);
+    waitForEventsX11(m_ctx, m_quitRequestCallback, m_displayChangeCallback);
 }
 
 void X11Backend::waitEventsTimeout(double timeoutSeconds) {
-    waitTimeout(m_ctx, timeoutSeconds, m_quitRequestCallback,
-                m_displayChangeCallback);
+    waitForEventsWithTimeoutX11(m_ctx, timeoutSeconds, m_quitRequestCallback,
+                                m_displayChangeCallback);
 }
 
 void X11Backend::setQuitRequestCallback(std::function<bool()> callback) {
@@ -170,48 +171,53 @@ void X11Backend::setDisplayChangeCallback(std::function<void()> callback) {
 }
 void X11Backend::setSystemThemeChangeCallback(
     std::function<void(VeraSystemTheme)> callback) {
-    theme::setChangeCallback(std::move(callback));
+    setThemeChangeCallbackX11(std::move(callback));
 }
 
 std::vector<VeraMonitorInfo> X11Backend::getMonitors() const {
-    return monitor::getMonitors(m_ctx);
+    return getMonitorsX11(m_ctx);
 }
 VeraMonitorInfo X11Backend::getPrimaryMonitor() const {
-    return monitor::getPrimaryMonitor(m_ctx);
+    return getPrimaryMonitorX11(m_ctx);
 }
 VeraMonitorInfo X11Backend::getMonitorAt(int32_t x, int32_t y) const {
-    return monitor::getMonitorAt(m_ctx, x, y);
+    return getMonitorAtCoordinateXYX11(m_ctx, x, y);
 }
 std::vector<VeraDisplayModeInfo> X11Backend::getSupportedDisplayModes(
     const VeraMonitorInfo& monitor) const {
-    return monitor::getSupportedDisplayModes(m_ctx, monitor);
+    return getSupportedDisplayModesX11(m_ctx, monitor);
 }
 
 bool X11Backend::supportsNativeDecorationHitTesting() const { return false; }
 
 std::string X11Backend::getClipboardText() const {
-    return clipboard::getText(m_ctx);
+    return getClipboardTextX11(m_ctx);
 }
 void X11Backend::setClipboardText(const std::string& text) {
-    clipboard::setText(m_ctx, text);
+    setClipboardTextX11(m_ctx, text);
 }
-bool X11Backend::hasClipboardText() const { return clipboard::hasText(m_ctx); }
+bool X11Backend::hasClipboardText() const { return hasClipboardTextX11(m_ctx); }
 
 void X11Backend::setDragCallback(VeraDragCallback callback) {
     setCallback(std::move(callback));
 }
 
 VeraSystemTheme X11Backend::getSystemTheme() const {
-    return theme::getCurrentTheme(m_ctx);
+    return getCurrentThemeX11(m_ctx);
 }
 
 std::vector<VeraInputDeviceInfo> X11Backend::getInputDevices() const {
     if (!m_hasXInput2) return {};
-    return xinput::enumerateDevices(m_ctx);
+    return enumerateInputDevicesX11(m_ctx);
 }
 
 VeraNativeHandle X11Backend::getNativeHandle() const {
     VeraNativeHandle handle;
     handle.display = m_ctx.display;
     return handle;
+}
+
+void X11Backend::applySettings(VeraSettings settings) {
+    m_ctx.keyRepeatDelay = settings.keyRepeatSettings.delayMs;
+    m_ctx.keyRepeatRate = settings.keyRepeatSettings.rate;
 }

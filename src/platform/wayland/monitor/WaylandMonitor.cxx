@@ -4,9 +4,7 @@
 
 #include "platform/wayland/internal/WaylandInternal.hxx"
 
-namespace monitor {
-
-std::vector<VeraMonitorInfo> getMonitors(const WaylandContext& ctx) {
+std::vector<VeraMonitorInfo> getMonitorsWayland(const WaylandContext& ctx) {
     std::vector<VeraMonitorInfo> list;
     list.reserve(ctx.outputs.size());
 
@@ -38,17 +36,17 @@ std::vector<VeraMonitorInfo> getMonitors(const WaylandContext& ctx) {
     return list;
 }
 
-VeraMonitorInfo getPrimaryMonitor(const WaylandContext& ctx) {
+VeraMonitorInfo getPrimaryMonitorWayland(const WaylandContext& ctx) {
     for (const auto& out : ctx.outputs) {
         if (out.isPrimary) {
-            auto monitors = getMonitors(ctx);
+            auto monitors = getMonitorsWayland(ctx);
             for (const auto& m : monitors) {
                 if (m.name == out.name) return m;
             }
         }
     }
 
-    auto monitors = getMonitors(ctx);
+    auto monitors = getMonitorsWayland(ctx);
     if (!monitors.empty()) {
         return monitors.front();
     }
@@ -56,8 +54,9 @@ VeraMonitorInfo getPrimaryMonitor(const WaylandContext& ctx) {
     return VeraMonitorInfo{};
 }
 
-VeraMonitorInfo getMonitorAt(const WaylandContext& ctx, int32_t x, int32_t y) {
-    auto monitors = getMonitors(ctx);
+VeraMonitorInfo getMonitorAtCoordinateXYWayland(const WaylandContext& ctx,
+                                                int32_t x, int32_t y) {
+    auto monitors = getMonitorsWayland(ctx);
     if (monitors.empty()) return VeraMonitorInfo{};
 
     for (const auto& monitor : monitors) {
@@ -72,7 +71,7 @@ VeraMonitorInfo getMonitorAt(const WaylandContext& ctx, int32_t x, int32_t y) {
     return monitors.front();
 }
 
-std::vector<VeraDisplayModeInfo> getSupportedDisplayModes(
+std::vector<VeraDisplayModeInfo> getSupportedDisplayModesWayland(
     const WaylandContext& ctx, const VeraMonitorInfo& monitor) {
     std::vector<VeraDisplayModeInfo> modes;
 
@@ -90,5 +89,3 @@ std::vector<VeraDisplayModeInfo> getSupportedDisplayModes(
 
     return modes;
 }
-
-}  // namespace monitor
