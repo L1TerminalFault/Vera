@@ -1,4 +1,5 @@
 #pragma once
+
 #include <X11/extensions/XInput2.h>
 
 #include <vector>
@@ -6,9 +7,7 @@
 #include "core/input/Mouse.h"
 #include "platform/x11/internal/X11Internal.hxx"
 
-namespace xinput {
-
-bool initialize(X11Context& ctx, int& outOpcode) {
+bool initializeXInputX11(X11Context& ctx, int& outOpcode) {
     int event, error;
     if (!XQueryExtension(ctx.display, "XInputExtension", &outOpcode, &event,
                          &error)) {
@@ -30,7 +29,7 @@ bool initialize(X11Context& ctx, int& outOpcode) {
     return true;
 }
 
-std::vector<VeraInputDeviceInfo> enumerateDevices(X11Context& ctx) {
+std::vector<VeraInputDeviceInfo> enumerateInputDevicesX11(X11Context& ctx) {
     std::vector<VeraInputDeviceInfo> devices;
     int count = 0;
     XIDeviceInfo* info = XIQueryDevice(ctx.display, XIAllDevices, &count);
@@ -49,5 +48,3 @@ std::vector<VeraInputDeviceInfo> enumerateDevices(X11Context& ctx) {
     XIFreeDeviceInfo(info);
     return devices;
 }
-
-}  // namespace xinput

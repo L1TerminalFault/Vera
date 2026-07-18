@@ -1,7 +1,5 @@
 #include "X11Cursor.hxx"
 
-namespace cursor {
-
 static std::unordered_map<VeraCursorShape, Cursor> gShapeCache;
 static Cursor gBlankCursor = 0;
 
@@ -42,7 +40,8 @@ static Cursor getOrCreateBlankCursor(X11Context& ctx, Window window) {
     return gBlankCursor;
 }
 
-void applyShape(X11Context& ctx, Window window, VeraCursorShape shape) {
+void applyCursorShapeX11(X11Context& ctx, Window window,
+                         VeraCursorShape shape) {
     auto it = gShapeCache.find(shape);
     Cursor cursor;
     if (it != gShapeCache.end()) {
@@ -54,7 +53,7 @@ void applyShape(X11Context& ctx, Window window, VeraCursorShape shape) {
     XDefineCursor(ctx.display, window, cursor);
 }
 
-void applyMode(X11Context& ctx, Window window, VeraCursorMode mode) {
+void applyCursorModeX11(X11Context& ctx, Window window, VeraCursorMode mode) {
     switch (mode) {
         case VeraCursorMode::Normal:
             XUngrabPointer(ctx.display, CurrentTime);
@@ -76,7 +75,7 @@ void applyMode(X11Context& ctx, Window window, VeraCursorMode mode) {
     }
 }
 
-void shutdown(X11Context& ctx) {
+void shutdownCursorX11(X11Context& ctx) {
     for (auto& [shape, cursor] : gShapeCache) {
         XFreeCursor(ctx.display, cursor);
     }
@@ -86,5 +85,3 @@ void shutdown(X11Context& ctx) {
         gBlankCursor = 0;
     }
 }
-
-}  // namespace cursor

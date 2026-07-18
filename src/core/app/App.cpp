@@ -1,5 +1,6 @@
 #include "core/app/App.h"
 
+#include "core/app/AppSettings.h"
 #include "core/platform/PlatformFactory.h"
 
 VeraApp::VeraApp(VeraAppInfo info) : m_appInfo(info), m_backend(create(info)) {
@@ -39,6 +40,8 @@ std::expected<VeraWindow*, VeraError> VeraApp::createWindow(
 }
 
 void VeraApp::destroyWindow(VeraWindow* window) {
+    if (!window) return;
+
     std::erase_if(m_windows,
                   [window](const auto& win) { return win.get() == window; });
 }
@@ -125,4 +128,8 @@ std::vector<VeraInputDeviceInfo> VeraApp::getInputDevices() const {
 }
 VeraNativeHandle VeraApp::getNativeHandle() const {
     return m_backend ? m_backend->getNativeHandle() : VeraNativeHandle{};
+}
+
+void VeraApp::applySettings(VeraSettings settings) {
+    m_backend->applySettings(settings);
 }

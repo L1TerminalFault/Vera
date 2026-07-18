@@ -6,17 +6,13 @@
 #include <cmath>
 #include <cstdlib>
 
-#include "core/monitor/Monitor.h"
-
-namespace xrandr {
-
-bool initialize(X11Context& ctx) {
+bool initializeXRandRX11(X11Context& ctx) {
     int major, minor;
     if (!XRRQueryVersion(ctx.display, &major, &minor)) return false;
     return (major > 1) || (major == 1 && minor >= 5);
 }
 
-float queryDpiScale(X11Context& ctx) {
+float queryDpiScaleX11(X11Context& ctx) {
     XrmInitialize();
     char* resourceString = XResourceManagerString(ctx.display);
     if (!resourceString) return 1.0f;
@@ -35,7 +31,7 @@ float queryDpiScale(X11Context& ctx) {
     return scale;
 }
 
-std::vector<VeraMonitorInfo> queryMonitors(X11Context& ctx) {
+std::vector<VeraMonitorInfo> queryMonitorsX11(X11Context& ctx) {
     std::vector<VeraMonitorInfo> out;
 
     int monitorCount = 0;
@@ -60,7 +56,7 @@ std::vector<VeraMonitorInfo> queryMonitors(X11Context& ctx) {
     }
     if (workAreaProp) XFree(workAreaProp);
 
-    float dpiScale = queryDpiScale(ctx);
+    float dpiScale = queryDpiScaleX11(ctx);
 
     for (int i = 0; i < monitorCount; ++i) {
         const XRRMonitorInfo& m = monitors[i];
@@ -121,7 +117,7 @@ std::vector<VeraMonitorInfo> queryMonitors(X11Context& ctx) {
     return out;
 }
 
-std::vector<VeraDisplayModeInfo> queryDisplayModes(
+std::vector<VeraDisplayModeInfo> queryDisplayModesX11(
     X11Context& ctx, const VeraMonitorInfo& monitor) {
     std::vector<VeraDisplayModeInfo> out;
 
@@ -169,5 +165,3 @@ std::vector<VeraDisplayModeInfo> queryDisplayModes(
     XRRFreeMonitors(monitors);
     return out;
 }
-
-}  // namespace xrandr

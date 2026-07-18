@@ -4,13 +4,15 @@
 #include <cstring>
 #include <iostream>
 
-#include "core/window/WindowTypes.h"
+#include "core/app/AppSettings.h"
+#include "core/app/Types.h"
 #include "platform/wayland/desktop/WaylandClipboard.hxx"
 #include "platform/wayland/desktop/WaylandDragDrop.hxx"
 #include "platform/wayland/desktop/WaylandTheme.hxx"
 #include "platform/wayland/events/WaylandEvents.hxx"
 #include "platform/wayland/input/WaylandJoystick.hxx"
 #include "platform/wayland/input/WaylandKeyboard.hxx"
+#include "platform/wayland/input/WaylandPointer.hxx"
 #include "platform/wayland/input/constraints/WaylandInputConstraint.hxx"
 #include "platform/wayland/monitor/WaylandMonitor.hxx"
 #include "platform/wayland/window/WaylandWindow.hxx"
@@ -21,6 +23,7 @@ static void seatHandleCapabilities(void* data, wl_seat* seat,
 
     if ((capabilities & WL_SEAT_CAPABILITY_POINTER) && !ctx->pointer) {
         ctx->pointer = wl_seat_get_pointer(seat);
+        addListenerToPointer(*ctx, ctx->pointer);
     } else if (!(capabilities & WL_SEAT_CAPABILITY_POINTER) && ctx->pointer) {
         wl_pointer_release(ctx->pointer);
         ctx->pointer = nullptr;
@@ -28,7 +31,7 @@ static void seatHandleCapabilities(void* data, wl_seat* seat,
 
     if ((capabilities & WL_SEAT_CAPABILITY_KEYBOARD) && !ctx->keyboard) {
         ctx->keyboard = wl_seat_get_keyboard(seat);
-        wl_keyboard_add_listener(ctx->keyboard, &KKEYBOARD_LISTENER, ctx);
+        addListenerToKeyboard(*ctx, ctx->keyboard);
     } else if (!(capabilities & WL_SEAT_CAPABILITY_KEYBOARD) && ctx->keyboard) {
         wl_keyboard_release(ctx->keyboard);
         ctx->keyboard = nullptr;
@@ -44,8 +47,16 @@ static void seatHandleName(void* data, wl_seat* seat, const char* name) {
 #endif
 }
 
+static void wmBaseHandlePing(void* data, xdg_wm_base* wmBase, uint32_t serial) {
+    (void)data;
+    xdg_wm_base_pong(wmBase, serial);
+}
+
 static const wl_seat_listener KSEAT_LISTENER = {
     .capabilities = seatHandleCapabilities, .name = seatHandleName};
+
+static const xdg_wm_base_listener KWM_BASE_LISTENER = {.ping =
+                                                           wmBaseHandlePing};
 
 static void registryHandleGlobal(void* data, wl_registry* registry,
                                  uint32_t name, const char* interface,
@@ -65,6 +76,8 @@ static void registryHandleGlobal(void* data, wl_registry* registry,
     } else if (std::strcmp(interface, "xdg_wm_base") == 0) {
         ctx->wmBase = static_cast<xdg_wm_base*>(
             wl_registry_bind(registry, name, &xdg_wm_base_interface, 1));
+
+        xdg_wm_base_add_listener(ctx->wmBase, &KWM_BASE_LISTENER, nullptr);
     } else if (std::strcmp(interface, "wp_pointer_constraints_v1") == 0) {
         ctx->pointerConstraints =
             static_cast<zwp_pointer_constraints_v1*>(wl_registry_bind(
@@ -108,16 +121,16 @@ bool WaylandBackend::initialize(const VeraAppInfo& info) {
         return false;
     }
 
-    theme::initialize(m_ctx);
-    waylandjoystick::initialize(m_ctx);
+    initializeThemeWayland(m_ctx);
+    initializeJoystickWayland(m_ctx);
 
     return true;
 }
 
 void WaylandBackend::shutdown() {
-    waylandjoystick::shutdown(m_ctx);
-    theme::shutdown();
-    unlockPointer(m_ctx);
+    shutdownJoystickWayland(m_ctx);
+    shutdownThemeWayland();
+    unlockPointerWayland(m_ctx);
 
     if (m_ctx.wmBase) {
         xdg_wm_base_destroy(m_ctx.wmBase);
@@ -169,10 +182,10 @@ WaylandBackend::createWindow(const VeraWindowInfo& info) {
 }
 
 void WaylandBackend::pollEvents() {
-    waylandjoystick::update(m_ctx);
-    theme::update();
+    updateJoystickWayland(m_ctx);
+    updateThemeWayland();
 
-    poll(m_ctx, m_quitRequestCallback, m_displayChangeCallback);
+    pollEventsWayland(m_ctx, m_quitRequestCallback, m_displayChangeCallback);
 
     auto it = m_ctx.windowsBySurface.begin();
     while (it != m_ctx.windowsBySurface.end()) {
@@ -186,19 +199,23 @@ void WaylandBackend::pollEvents() {
             ++it;
         }
     }
+
+    if (m_ctx.display) {
+        wl_display_flush(m_ctx.display);
+    }
 }
 
 void WaylandBackend::waitEvents() {
-    waylandjoystick::update(m_ctx);
-    theme::update();
-    wait(m_ctx, m_quitRequestCallback, m_displayChangeCallback);
+    updateJoystickWayland(m_ctx);
+    updateThemeWayland();
+    waitForEventsWayland(m_ctx, m_quitRequestCallback, m_displayChangeCallback);
 }
 
 void WaylandBackend::waitEventsTimeout(double timeoutSeconds) {
-    waylandjoystick::update(m_ctx);
-    theme::update();
-    waitTimeout(m_ctx, timeoutSeconds, m_quitRequestCallback,
-                m_displayChangeCallback);
+    updateJoystickWayland(m_ctx);
+    updateThemeWayland();
+    waitForEventsWithTimeoutWayland(
+        m_ctx, timeoutSeconds, m_quitRequestCallback, m_displayChangeCallback);
 }
 
 void WaylandBackend::setQuitRequestCallback(std::function<bool()> callback) {
@@ -215,42 +232,42 @@ void WaylandBackend::setSystemThemeChangeCallback(
 }
 
 std::vector<VeraMonitorInfo> WaylandBackend::getMonitors() const {
-    return monitor::getMonitors(m_ctx);
+    return getMonitorsWayland(m_ctx);
 }
 
 VeraMonitorInfo WaylandBackend::getPrimaryMonitor() const {
-    return monitor::getPrimaryMonitor(m_ctx);
+    return getPrimaryMonitorWayland(m_ctx);
 }
 
 VeraMonitorInfo WaylandBackend::getMonitorAt(int32_t x, int32_t y) const {
-    return monitor::getMonitorAt(m_ctx, x, y);
+    return getMonitorAtCoordinateXYWayland(m_ctx, x, y);
 }
 
 std::vector<VeraDisplayModeInfo> WaylandBackend::getSupportedDisplayModes(
     const VeraMonitorInfo& monitor) const {
-    return monitor::getSupportedDisplayModes(m_ctx, monitor);
+    return getSupportedDisplayModesWayland(m_ctx, monitor);
 }
 
 bool WaylandBackend::supportsNativeDecorationHitTesting() const { return true; }
 
 std::string WaylandBackend::getClipboardText() const {
-    return clipboard::getClipboardText(m_ctx);
+    return getClipboardTextWayland(m_ctx);
 }
 
 void WaylandBackend::setClipboardText(const std::string& text) {
-    clipboard::setClipboardText(m_ctx, text);
+    setClipboardTextWayland(m_ctx, text);
 }
 
 bool WaylandBackend::hasClipboardText() const {
-    return clipboard::hasClipboardText(m_ctx);
+    return hasClipboardTextWayland(m_ctx);
 }
 
 void WaylandBackend::setDragCallback(VeraDragCallback callback) {
-    dnd::setDragCallback(m_ctx, callback);
+    setDragCallbackWayland(m_ctx, callback);
 }
 
 VeraSystemTheme WaylandBackend::getSystemTheme() const {
-    return (theme::getActiveMode() == theme::VeraThemeMode::Dark)
+    return (getActiveThemeModeWayland() == VeraThemeMode::Dark)
                ? VeraSystemTheme::Dark
                : VeraSystemTheme::Light;
 }
@@ -263,4 +280,9 @@ VeraNativeHandle WaylandBackend::getNativeHandle() const {
     VeraNativeHandle handle{};
     handle.display = m_ctx.display;
     return handle;
+}
+
+void WaylandBackend::applySettings(VeraSettings settings) {
+    m_ctx.keyRepeatDelay = settings.keyRepeatSettings.delayMs;
+    m_ctx.keyRepeatRate = settings.keyRepeatSettings.rate;
 }

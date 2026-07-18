@@ -6,11 +6,12 @@
 #include <string>
 #include <vector>
 
-#include "core/app/AppInfo.h"
-#include "core/app/Error.h"
+#include "AppInfo.h"
+#include "AppSettings.h"
+#include "Error.h"
+#include "Types.h"
 #include "core/platform/IPlatformBackend.h"
 #include "core/window/Window.h"
-#include "core/window/WindowTypes.h"
 
 class VeraApp {
    public:
@@ -58,6 +59,7 @@ class VeraApp {
     VeraSystemTheme getSystemTheme() const;
     std::vector<VeraInputDeviceInfo> getInputDevices() const;
     VeraNativeHandle getNativeHandle() const;
+    void applySettings(VeraSettings);
 
    private:
     VeraApp(VeraAppInfo info, std::unique_ptr<IPlatformBackend> backend,

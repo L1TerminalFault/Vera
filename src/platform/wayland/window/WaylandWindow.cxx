@@ -71,11 +71,13 @@ static void xdgSurfaceHandleConfigure(void* data, xdg_surface* xdgSurface,
                               window->height());
             window->setFallbackBuffer(fallback.wlBuffer);
         }
+
+        wl_surface_commit(window->surface());
     } else {
+        wl_surface_commit(window->surface());
+
         window->triggerResizeCallback();
     }
-
-    wl_surface_commit(window->surface());
 }
 
 static const xdg_surface_listener KXDG_SURFACE_LISTENER = {
@@ -128,31 +130,55 @@ void WaylandWindow::initSurface(const VeraWindowInfo& info) {
     xdg_toplevel_set_title(m_xdgToplevel, info.title.c_str());
     xdg_toplevel_set_app_id(m_xdgToplevel, "VeraEngine");
 
-    m_decoration = createDecoration(m_ctx, m_xdgToplevel);
+    m_decoration = createDecorationWayland(m_ctx, m_xdgToplevel);
 
     wl_surface_commit(m_surface);
 }
 
 void WaylandWindow::destroySurface() {
+    m_keyCallback = {};
+    m_mouseButtonCallback = {};
+    m_mouseMoveCallback = {};
+    m_scrollCallback = {};
+    m_charCallback = {};
+
+    if (m_ctx.focusedWindow == this) {
+        m_ctx.focusedWindow = nullptr;
+        m_ctx.keyboardFocusSurface = nullptr;
+    }
+
+    if (m_ctx.pointerFocusSurface == m_surface) {
+        m_ctx.pointerFocusSurface = nullptr;
+    }
+
+    if (m_ctx.pressedKeys.size()) {
+        m_ctx.pressedKeys.clear();
+    }
+
     if (m_fallbackBuffer) {
         wl_buffer_destroy(m_fallbackBuffer);
         m_fallbackBuffer = nullptr;
     }
+
     if (m_surface) {
         m_ctx.windowsBySurface.erase(m_surface);
     }
+
     if (m_decoration) {
-        destroyDecoration(m_decoration);
+        destroyDecorationWayland(m_decoration);
         m_decoration = nullptr;
     }
+
     if (m_xdgToplevel) {
         xdg_toplevel_destroy(m_xdgToplevel);
         m_xdgToplevel = nullptr;
     }
+
     if (m_xdgSurface) {
         xdg_surface_destroy(m_xdgSurface);
         m_xdgSurface = nullptr;
     }
+
     if (m_surface) {
         wl_surface_destroy(m_surface);
         m_surface = nullptr;
@@ -295,15 +321,15 @@ void WaylandWindow::setCharCallback(std::function<void(uint32_t)> callback) {
 }
 
 void WaylandWindow::setCursorMode(VeraCursorMode mode) {
-    setMode(m_ctx, m_surface, mode);
+    setCursorModeWayland(m_ctx, m_surface, mode);
 }
 
 void WaylandWindow::setCursorShape(VeraCursorShape shape) {
-    setShape(m_ctx, shape);
+    setCursorShapeWayland(m_ctx, shape);
 }
 
 VeraMonitorInfo WaylandWindow::getCurrentMonitor() const {
-    return monitor::getPrimaryMonitor(m_ctx);
+    return getPrimaryMonitorWayland(m_ctx);
 }
 
 void WaylandWindow::handleConfigure(int32_t width, int32_t height,
@@ -356,7 +382,7 @@ void WaylandWindow::setFallbackBuffer(wl_buffer* buffer) {
 void WaylandWindow::setJoystickButtonCallback(
     VeraJoystickButtonCallback callback) {
     m_joyButtonCallback = callback;
-    waylandjoystick::setButtonCallback(
+    setJoystickButtonCallbackWayland(
         [this](uint32_t id, uint32_t btn, bool pressed) {
             if (m_joyButtonCallback) m_joyButtonCallback(id, btn, pressed);
         });
@@ -364,7 +390,7 @@ void WaylandWindow::setJoystickButtonCallback(
 
 void WaylandWindow::setJoystickAxisCallback(VeraJoystickAxisCallback callback) {
     m_joyAxisCallback = callback;
-    waylandjoystick::setAxisCallback(
+    setJoystickAxisCallbackWayland(
         [this](uint32_t id, uint32_t axis, float val) {
             if (m_joyAxisCallback) m_joyAxisCallback(id, axis, val);
         });

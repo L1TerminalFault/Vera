@@ -1,4 +1,4 @@
-#include "platform/wayland/input/constraints/WaylandInputConstraint.hxx"
+#include "WaylandInputConstraint.hxx"
 
 #include "platform/wayland/internal/protocols/pointer-constraints-unstable-v1-client-protocol.h"
 #include "platform/wayland/internal/protocols/relative-pointer-unstable-v1-client-protocol.h"
@@ -51,7 +51,7 @@ static const zwp_locked_pointer_v1_listener KLOCKED_POINTER_LISTENER = {
     .locked = lockedPointerHandleLocked,
     .unlocked = lockedPointerHandleUnlocked};
 
-void unlockPointer(WaylandContext& ctx) {
+void unlockPointerWayland(WaylandContext& ctx) {
     (void)ctx;
 
     if (sRelativePointer) {
@@ -65,13 +65,13 @@ void unlockPointer(WaylandContext& ctx) {
     }
 }
 
-void lockPointer(WaylandContext& ctx, wl_surface* surface) {
+void lockPointerWayland(WaylandContext& ctx, wl_surface* surface) {
     if (!ctx.pointerConstraints || !ctx.relativePointerManager ||
         !ctx.pointer || !surface) {
         return;
     }
 
-    unlockPointer(ctx);
+    unlockPointerWayland(ctx);
 
     sLockedPointer = zwp_pointer_constraints_v1_lock_pointer(
         ctx.pointerConstraints, surface, ctx.pointer, nullptr,

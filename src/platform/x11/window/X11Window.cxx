@@ -45,14 +45,14 @@ X11Window::X11Window(X11Context& ctx, Window xid, VeraWindowHandle handle,
                           m_xid, XNFocusWindow, m_xid, nullptr);
     }
 
-    ::setTitle(ctx, xid, info.title);
-    setSizeHints(ctx, xid, info.minWidth, info.minHeight, info.maxWidth,
-                 info.maxHeight, info.resizable);
-    setWindowType(ctx, xid);
-    setPid(ctx, xid);
-    if (!info.decorated) setDecorated(ctx, xid, false);
-    if (info.alwaysOnTop) ::setAlwaysOnTop(ctx, xid, true);
-    if (!info.iconPath.empty()) ::setIcon(ctx, xid, info.iconPath);
+    setTitleX11(ctx, xid, info.title);
+    setSizeHintsX11(ctx, xid, info.minWidth, info.minHeight, info.maxWidth,
+                    info.maxHeight, info.resizable);
+    setWindowTypeX11(ctx, xid);
+    setPidX11(ctx, xid);
+    if (!info.decorated) setDecoratedX11(ctx, xid, false);
+    if (info.alwaysOnTop) setAlwaysOnTopX11(ctx, xid, true);
+    if (!info.iconPath.empty()) setIconX11(ctx, xid, info.iconPath);
 
     // XDND: advertise that we accept drops (version 5).
     Atom xdndVersion = 5;
@@ -93,10 +93,10 @@ void X11Window::setPosition(int32_t x, int32_t y) {
     XMoveWindow(m_ctx.display, m_xid, x, y);
 }
 void X11Window::setMinSize(uint32_t width, uint32_t height) {
-    ::setSizeHints(m_ctx, m_xid, width, height, 0, 0, true);
+    setSizeHintsX11(m_ctx, m_xid, width, height, 0, 0, true);
 }
 void X11Window::setMaxSize(uint32_t width, uint32_t height) {
-    ::setSizeHints(m_ctx, m_xid, 0, 0, width, height, true);
+    setSizeHintsX11(m_ctx, m_xid, 0, 0, width, height, true);
 }
 VeraWindowState X11Window::getState() const { return m_state; }
 
@@ -106,12 +106,12 @@ void X11Window::minimize() {
     XIconifyWindow(m_ctx.display, m_xid, m_ctx.screen);
 }
 void X11Window::maximize() {
-    ::setNetWmState(m_ctx, m_xid, m_ctx.atoms.netWmStateMaximizedHorz,
-                    m_ctx.atoms.netWmStateMaximizedVert, true);
+    setNetWmStateX11(m_ctx, m_xid, m_ctx.atoms.netWmStateMaximizedHorz,
+                     m_ctx.atoms.netWmStateMaximizedVert, true);
 }
 void X11Window::restore() {
-    ::setNetWmState(m_ctx, m_xid, m_ctx.atoms.netWmStateMaximizedHorz,
-                    m_ctx.atoms.netWmStateMaximizedVert, false);
+    setNetWmStateX11(m_ctx, m_xid, m_ctx.atoms.netWmStateMaximizedHorz,
+                     m_ctx.atoms.netWmStateMaximizedVert, false);
     XMapWindow(m_ctx.display, m_xid);
 }
 
@@ -141,17 +141,17 @@ void X11Window::focus() {
     XRaiseWindow(m_ctx.display, m_xid);
 }
 void X11Window::setTitle(const std::string& title) {
-    ::setTitle(m_ctx, m_xid, title);
+    setTitleX11(m_ctx, m_xid, title);
 }
 void X11Window::setFullscreen(FullScreenMode mode) {
-    apply(m_ctx, m_xid, mode);
+    applyFullscreenX11(m_ctx, m_xid, mode);
     m_state.isFullscreen = (mode != FullScreenMode::Windowed);
 }
 void X11Window::setAlwaysOnTop(bool value) {
-    ::setAlwaysOnTop(m_ctx, m_xid, value);
+    setAlwaysOnTopX11(m_ctx, m_xid, value);
 }
 void X11Window::setIcon(const std::string& iconPath) {
-    ::setIcon(m_ctx, m_xid, iconPath);
+    setIconX11(m_ctx, m_xid, iconPath);
 }
 
 void X11Window::setTitlebarHitTestRegions(const VeraHitTestRegions& regions) {
@@ -198,21 +198,21 @@ void X11Window::setCharCallback(std::function<void(uint32_t)> callback) {
 
 void X11Window::setCursorMode(VeraCursorMode mode) {
     m_cursorDisabled = (mode == VeraCursorMode::Disabled);
-    cursor::applyMode(m_ctx, m_xid, mode);
+    applyCursorModeX11(m_ctx, m_xid, mode);
 }
 void X11Window::setCursorShape(VeraCursorShape shape) {
-    cursor::applyShape(m_ctx, m_xid, shape);
+    applyCursorShapeX11(m_ctx, m_xid, shape);
 }
 
 VeraMonitorInfo X11Window::getCurrentMonitor() const {
     int32_t centerX = m_state.x + static_cast<int32_t>(m_state.width) / 2;
     int32_t centerY = m_state.y + static_cast<int32_t>(m_state.height) / 2;
-    return monitor::getMonitorAt(m_ctx, centerX, centerY);
+    return getMonitorAtCoordinateXYX11(m_ctx, centerX, centerY);
 }
 
 void X11Window::setJoystickButtonCallback(VeraJoystickButtonCallback callback) {
     m_joyButtonCallback = callback;
-    x11joystick::setButtonCallback(
+    setJoystickButtonCallbackX11(
         [this](uint32_t id, uint32_t btn, bool pressed) {
             if (m_joyButtonCallback) m_joyButtonCallback(id, btn, pressed);
         });
@@ -220,7 +220,7 @@ void X11Window::setJoystickButtonCallback(VeraJoystickButtonCallback callback) {
 
 void X11Window::setJoystickAxisCallback(VeraJoystickAxisCallback callback) {
     m_joyAxisCallback = callback;
-    x11joystick::setAxisCallback([this](uint32_t id, uint32_t axis, float val) {
+    setJoystickAxisCallbackX11([this](uint32_t id, uint32_t axis, float val) {
         if (m_joyAxisCallback) m_joyAxisCallback(id, axis, val);
     });
 }
@@ -262,22 +262,22 @@ void X11Window::handleXEvent(XEvent& event) {
             if (m_focusChangeCallback) m_focusChangeCallback(false);
             break;
         case KeyPress:
-            ::handleKeyPress(m_ctx, event.xkey, m_keyState, m_keyCallback,
-                             m_charCallback);
+            handleKeyPressX11(m_ctx, event.xkey, m_keyState, m_keyCallback,
+                              m_charCallback);
             break;
         case KeyRelease:
-            ::handleKeyRelease(m_ctx, event.xkey, m_keyState, m_keyCallback);
+            handleKeyReleaseX11(m_ctx, event.xkey, m_keyState, m_keyCallback);
             break;
         case ButtonPress:
             if (m_customTitleBar) {
-                handleTitlebarButtonPress(m_ctx, m_xid, m_hitTestRegions,
-                                          event.xbutton.x, event.xbutton.y);
+                handleTitlebarButtonPressX11(m_ctx, m_xid, m_hitTestRegions,
+                                             event.xbutton.x, event.xbutton.y);
             }
-            handleButtonPress(event.xbutton, m_mouseButtonCallback,
-                              m_scrollCallback);
+            handleMouseButtonPressX11(event.xbutton, m_mouseButtonCallback,
+                                      m_scrollCallback);
             break;
         case ButtonRelease:
-            handleButtonRelease(event.xbutton, m_mouseButtonCallback);
+            handleMouseButtonReleaseX11(event.xbutton, m_mouseButtonCallback);
             break;
         case MotionNotify:
             if (m_cursorDisabled) {
@@ -296,9 +296,9 @@ void X11Window::handleXEvent(XEvent& event) {
             break;
         case PropertyNotify:
             if (event.xproperty.atom == m_ctx.atoms.netWmState) {
-                m_state.isMaximized = ::hasNetWmState(
+                m_state.isMaximized = hasNetWmStateX11(
                     m_ctx, m_xid, m_ctx.atoms.netWmStateMaximizedHorz);
-                m_state.isFullscreen = ::hasNetWmState(
+                m_state.isFullscreen = hasNetWmStateX11(
                     m_ctx, m_xid, m_ctx.atoms.netWmStateFullscreen);
             }
             break;

@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <unordered_map>
 
-#include "core/window/WindowTypes.h"
+#include "core/app/Types.h"
 
 class X11Window;
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/app/AppSettings.h"
 #include "core/platform/IPlatformBackend.h"
 #include "platform/wayland/internal/WaylandInternal.hxx"
 
@@ -40,6 +41,7 @@ class WaylandBackend : public IPlatformBackend {
     VeraSystemTheme getSystemTheme() const override;
     std::vector<VeraInputDeviceInfo> getInputDevices() const override;
     VeraNativeHandle getNativeHandle() const override;
+    void applySettings(VeraSettings) override;
 
     WaylandContext& getContext() { return m_ctx; }
     const WaylandContext& getContext() const { return m_ctx; }

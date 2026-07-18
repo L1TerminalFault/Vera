@@ -1,3 +1,5 @@
+#include "X11XKB.hxx"
+
 #include <X11/XF86keysym.h>
 #include <X11/XKBlib.h>
 #include <X11/Xlib.h>
@@ -9,9 +11,7 @@
 #include "platform/x11/internal/X11Internal.hxx"
 #include "platform/x11/window/X11Window.hxx"
 
-namespace xkb {
-
-void initialize(X11Context& ctx) {
+void initializeXKBX11(X11Context& ctx) {
     int major = XkbMajorVersion, minor = XkbMinorVersion;
     XkbLibraryVersion(&major, &minor);
     XkbQueryExtension(ctx.display, nullptr, nullptr, nullptr, &major, &minor);
@@ -303,12 +303,12 @@ static VeraKey mapKeysym(KeySym ks) {
     }
 }
 
-VeraKey keycodeToVeraKey(X11Context& ctx, unsigned int keycode) {
+VeraKey convertKeycodeToVeraKeyX11(X11Context& ctx, unsigned int keycode) {
     KeySym ks = XkbKeycodeToKeysym(ctx.display, keycode, 0, 0);
     return mapKeysym(ks);
 }
 
-uint32_t keyEventToCodepoint(X11Context& ctx, XKeyEvent& event) {
+uint32_t convertKeyEventToCodepointX11(X11Context& ctx, XKeyEvent& event) {
     std::array<char, 32> buffer{};
     KeySym keysym = NoSymbol;
     Status status;
@@ -353,5 +353,3 @@ uint32_t keyEventToCodepoint(X11Context& ctx, XKeyEvent& event) {
 
     return codepoint;
 }
-
-}  // namespace xkb

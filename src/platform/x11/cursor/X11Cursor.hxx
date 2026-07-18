@@ -10,12 +10,8 @@
 
 #include "core/input/Mouse.h"
 
-namespace cursor {
+void applyCursorModeX11(X11Context& ctx, Window window, VeraCursorMode mode);
 
-void applyMode(X11Context& ctx, Window window, VeraCursorMode mode);
+void shutdownCursorX11(X11Context& ctx);
 
-void shutdown(X11Context& ctx);
-
-void applyShape(X11Context& ctx, Window window, VeraCursorShape shape);
-
-}  // namespace cursor
+void applyCursorShapeX11(X11Context& ctx, Window window, VeraCursorShape shape);

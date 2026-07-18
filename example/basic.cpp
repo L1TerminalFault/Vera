@@ -3,12 +3,15 @@
 #include <vector>
 
 #include "core/app/App.h"
+#include "core/app/AppSettings.h"
 
 int main() {
     VeraAppInfo appInfo{};
     appInfo.enablePlatformDebugging = true;
 
     VeraApp app(appInfo);
+    VeraSettings settings({{.delayMs = 1000, .rate = 5}});
+    app.applySettings(settings);
 
     std::vector<VeraWindow*> activeWindows;
     const int windowCount = 3;
@@ -62,14 +65,29 @@ int main() {
             return true;
         });
 
-        window->setKeyCallback(
-            [window](VeraKey key, bool pressed, bool repeat) {
-                if (pressed && !repeat) {
-                    std::cout << "[Instance " << window->getHandle().value
-                              << "] Received Key Press Enum ID: "
-                              << static_cast<uint16_t>(key) << std::endl;
-                }
-            });
+        auto windowHandle = window->getHandle().value;
+
+        window->setKeyCallback([windowHandle](VeraKey key, bool pressed,
+                                              bool repeat) {
+            std::cout << "[Instance " << windowHandle << "] ";
+
+            if (pressed && repeat) {
+                std::cout << "Key Held Enum ID: " << static_cast<uint16_t>(key);
+            } else if (pressed) {
+                std::cout << "Key Pressed Enum ID: "
+                          << static_cast<uint16_t>(key);
+            } else {
+                std::cout << "Key Released Enum ID: "
+                          << static_cast<uint16_t>(key);
+            }
+
+            std::cout << std::endl;
+        });
+
+        window->setMouseMoveCallback([window](double x, double y) {
+            std::cout << "[Instance " << window->getHandle().value
+                      << "] Mouse position: " << x << ", " << y << std::endl;
+        });
     }
 
     while (app.getWindowCount() > 0) {

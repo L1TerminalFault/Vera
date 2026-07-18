@@ -2,7 +2,7 @@
 
 #include <wayland-client.h>
 
-#include "core/window/WindowTypes.h"
+#include "core/app/Types.h"
 #include "platform/wayland/internal/protocols/xdg-shell-client-protocol.h"
 
 VeraWindowState parseStates(wl_array* states, VeraWindowState current) {

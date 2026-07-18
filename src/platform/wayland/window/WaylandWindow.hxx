@@ -8,7 +8,7 @@ class WaylandWindow : public VeraWindow {
    public:
     WaylandWindow(WaylandContext& ctx, VeraWindowHandle handle,
                   const VeraWindowInfo& info);
-    ~WaylandWindow() override;
+    ~WaylandWindow();
 
     VeraWindowHandle getHandle() const override;
     VeraNativeHandle getNativeHandle() const override;
@@ -68,7 +68,6 @@ class WaylandWindow : public VeraWindow {
     const auto& getMouseMoveCallback() const { return m_mouseMoveCallback; }
     const auto& getScrollCallback() const { return m_scrollCallback; }
 
-    // --- Internal Interface ---
     wl_surface* surface() const { return m_surface; }
     xdg_surface* xdgSurface() const { return m_xdgSurface; }
     xdg_toplevel* xdgToplevel() const { return m_xdgToplevel; }
@@ -76,7 +75,6 @@ class WaylandWindow : public VeraWindow {
     void handleConfigure(int32_t width, int32_t height, wl_array* states);
     void triggerResizeCallback();
 
-    // --- Graphics Integration & Fallback ---
     WaylandContext& context() const { return m_ctx; }
     uint32_t width() const { return m_width; }
     uint32_t height() const { return m_height; }
@@ -114,7 +112,6 @@ class WaylandWindow : public VeraWindow {
     uint32_t m_width = 800;
     uint32_t m_height = 600;
 
-    // Callbacks
     std::function<void(uint32_t, uint32_t)> m_resizeCallback;
     std::function<void(int32_t, int32_t)> m_moveCallback;
     std::function<bool()> m_closeRequestCallback;
