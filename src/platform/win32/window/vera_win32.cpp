@@ -1,425 +1,59 @@
 #include "vera_win32.h"
 
-#include <dwmapi.h>
 #include <shellscalingapi.h>
 #include <windowsx.h>
-
+#include <bit>
 #include <string>
 #include <vector>
+#include "platform/win32/utils/win32_utils.h"
+#include "platform/win32/utils/keyTranslationMap.h"
+#include "platform/win32/utils/windowCreationUtils.h"
 
 #include "core/monitor/Monitor.h"
 
-static std::wstring utf8ToWstring(const std::string& s) {
-    if (s.empty()) return std::wstring{};
-    int required = MultiByteToWideChar(CP_UTF8, 0, s.data(),
-                                       static_cast<int>(s.size()), nullptr, 0);
-    if (required == 0) return std::wstring{};
-    std::wstring out;
-    out.resize(required);
-    MultiByteToWideChar(CP_UTF8, 0, s.data(), static_cast<int>(s.size()),
-                        out.data(), required);
-    return out;
-}
-
-static std::string wstringToUtf8(const std::wstring& s) {
-    if (s.empty()) return std::string{};
-    int required =
-        WideCharToMultiByte(CP_UTF8, 0, s.data(), static_cast<int>(s.size()),
-                            nullptr, 0, nullptr, nullptr);
-    if (required == 0) return std::string{};
-    std::string out;
-    out.resize(required);
-    WideCharToMultiByte(CP_UTF8, 0, s.data(), static_cast<int>(s.size()),
-                        out.data(), required, nullptr, nullptr);
-    return out;
-}
-
-static VeraKey translateWin32Key(WPARAM wparam, LPARAM lparam) {
-    switch (wparam) {
-        case 'A':
-            return VeraKey::A;
-        case 'B':
-            return VeraKey::B;
-        case 'C':
-            return VeraKey::C;
-        case 'D':
-            return VeraKey::D;
-        case 'E':
-            return VeraKey::E;
-        case 'F':
-            return VeraKey::F;
-        case 'G':
-            return VeraKey::G;
-        case 'H':
-            return VeraKey::H;
-        case 'I':
-            return VeraKey::I;
-        case 'J':
-            return VeraKey::J;
-        case 'K':
-            return VeraKey::K;
-        case 'L':
-            return VeraKey::L;
-        case 'M':
-            return VeraKey::M;
-        case 'N':
-            return VeraKey::N;
-        case 'O':
-            return VeraKey::O;
-        case 'P':
-            return VeraKey::P;
-        case 'Q':
-            return VeraKey::Q;
-        case 'R':
-            return VeraKey::R;
-        case 'S':
-            return VeraKey::S;
-        case 'T':
-            return VeraKey::T;
-        case 'U':
-            return VeraKey::U;
-        case 'V':
-            return VeraKey::V;
-        case 'W':
-            return VeraKey::W;
-        case 'X':
-            return VeraKey::X;
-        case 'Y':
-            return VeraKey::Y;
-        case 'Z':
-            return VeraKey::Z;
-
-        case '0':
-            return VeraKey::Num0;
-        case '1':
-            return VeraKey::Num1;
-        case '2':
-            return VeraKey::Num2;
-        case '3':
-            return VeraKey::Num3;
-        case '4':
-            return VeraKey::Num4;
-        case '5':
-            return VeraKey::Num5;
-        case '6':
-            return VeraKey::Num6;
-        case '7':
-            return VeraKey::Num7;
-        case '8':
-            return VeraKey::Num8;
-        case '9':
-            return VeraKey::Num9;
-
-        case VK_ESCAPE:
-            return VeraKey::Escape;
-        case VK_SPACE:
-            return VeraKey::Space;
-        case VK_RETURN:
-            return VeraKey::Enter;
-        case VK_TAB:
-            return VeraKey::Tab;
-        case VK_BACK:
-            return VeraKey::Backspace;
-        case VK_INSERT:
-            return VeraKey::Insert;
-        case VK_DELETE:
-            return VeraKey::Delete;
-        case VK_LEFT:
-            return VeraKey::Left;
-        case VK_RIGHT:
-            return VeraKey::Right;
-        case VK_UP:
-            return VeraKey::Up;
-        case VK_DOWN:
-            return VeraKey::Down;
-        case VK_CAPITAL:
-            return VeraKey::CapsLock;
-        case VK_NUMLOCK:
-            return VeraKey::NumLock;
-        case VK_SCROLL:
-            return VeraKey::ScrollLock;
-        case VK_SNAPSHOT:
-            return VeraKey::PrintScreen;
-        case VK_PAUSE:
-            return VeraKey::Pause;
-
-        case VK_F1:
-            return VeraKey::F1;
-        case VK_F2:
-            return VeraKey::F2;
-        case VK_F3:
-            return VeraKey::F3;
-        case VK_F4:
-            return VeraKey::F4;
-        case VK_F5:
-            return VeraKey::F5;
-        case VK_F6:
-            return VeraKey::F6;
-        case VK_F7:
-            return VeraKey::F7;
-        case VK_F8:
-            return VeraKey::F8;
-        case VK_F9:
-            return VeraKey::F9;
-        case VK_F10:
-            return VeraKey::F10;
-        case VK_F11:
-            return VeraKey::F11;
-        case VK_F12:
-            return VeraKey::F12;
-
-        // Handle precise Left/Right modifier isolation via scan codes
-        case VK_SHIFT: {
-            UINT scancode = (lparam & 0x00ff0000) >> 16;
-            UINT mappedVk = MapVirtualKeyW(scancode, MAPVK_VSC_TO_VK_EX);
-
-            return (mappedVk == VK_RSHIFT) ? VeraKey::RightShift
-                                           : VeraKey::LeftShift;
-        }
-        case VK_CONTROL:
-            return (lparam & 0x01000000) ? VeraKey::RightCtrl
-                                         : VeraKey::LeftCtrl;
-        case VK_MENU:
-            return (lparam & 0x01000000) ? VeraKey::RightAlt : VeraKey::LeftAlt;
-        case VK_LWIN:
-            return VeraKey::LeftSuper;
-        case VK_RWIN:
-            return VeraKey::RightSuper;
-
-        default:
-            return VeraKey::Unknown;
-    }
-}
-
-VeraWindowHandle VeraWin32Window::generateUniqueHandle() {
-    uint64_t id = s_next_handle_id.fetch_add(1, std::memory_order_relaxed);
-    return VeraWindowHandle{id};
-}
-
-void VeraWin32Window::calculateWin32Styles(const VeraWindowInfo& info,
-                                           DWORD& style, DWORD& exStyle) const {
-    style = 0;
-    exStyle = 0;
-
-    if (info.fullscreenMode == FullScreenMode::Exclusive ||
-        info.fullscreenMode == FullScreenMode::Borderless) {
-        style |= WS_POPUP;
-    } else if (info.customTitleBar) {
-        style |= WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-        if (info.resizable) {
-            style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
-        }
-    } else {
-        if (info.decorated) {
-            style |= WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-            if (info.resizable) {
-                style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
-            }
-        } else {
-            style |= WS_POPUP;
-        }
-    }
-
-    if (info.alwaysOnTop) {
-        exStyle |= WS_EX_TOPMOST;
-    }
-
-    if (info.transparentFramebuffer) {
-        exStyle |= WS_EX_LAYERED;
-    }
-
-    if (info.startMaximized &&
-        info.fullscreenMode == FullScreenMode::Windowed) {
-        style |= WS_MAXIMIZE;
-    }
-
-    if (info.startMinimized &&
-        info.fullscreenMode == FullScreenMode::Windowed) {
-        style |= WS_MINIMIZE;
-    }
-}
-
-void VeraWin32Window::calculateWindowDimensions(const VeraWindowInfo& info,
-                                                DWORD style, DWORD exStyle,
-                                                int& x, int& y, int& width,
-                                                int& height) const {
-    RECT rect = {0, 0, static_cast<LONG>(info.width),
-                 static_cast<LONG>(info.height)};
-
-    if (info.fullscreenMode == FullScreenMode::Windowed &&
-        !info.customTitleBar && info.decorated) {
-        AdjustWindowRectEx(&rect, style, FALSE, exStyle);
-    }
-
-    width = rect.right - rect.left;
-    height = rect.bottom - rect.top;
-
-    HMONITOR targetMonitor = nullptr;
-    if (info.monitorIndex >= 0) {
-        struct MonitorSearchContext {
-            int target;
-            int current;
-            HMONITOR result;
-        } context = {info.monitorIndex, 0, nullptr};
-
-        EnumDisplayMonitors(
-            nullptr, nullptr,
-            [](HMONITOR monitor, HDC, LPRECT, LPARAM param) -> BOOL {
-                auto* ctx = reinterpret_cast<MonitorSearchContext*>(param);
-                if (ctx->current == ctx->target) {
-                    ctx->result = monitor;
-                    return FALSE;
-                }
-                ctx->current++;
-                return TRUE;
-            },
-            reinterpret_cast<LPARAM>(&context));
-
-        targetMonitor = context.result;
-    }
-
-    if (!targetMonitor) {
-        targetMonitor = MonitorFromPoint(POINT{0, 0}, MONITOR_DEFAULTTOPRIMARY);
-    }
-
-    MONITORINFO monitorInfo = {sizeof(MONITORINFO)};
-    GetMonitorInfoW(targetMonitor, &monitorInfo);
-
-    RECT targetArea = (info.fullscreenMode != FullScreenMode::Windowed)
-                          ? monitorInfo.rcMonitor
-                          : monitorInfo.rcWork;
-
-    if (info.fullscreenMode != FullScreenMode::Windowed) {
-        x = targetArea.left;
-        y = targetArea.top;
-        width = targetArea.right - targetArea.left;
-        height = targetArea.bottom - targetArea.top;
-        return;
-    }
-
-    if (info.centerOnMonitor) {
-        int monitorWidth = targetArea.right - targetArea.left;
-        int monitorHeight = targetArea.bottom - targetArea.top;
-        x = targetArea.left + (monitorWidth - width) / 2;
-        y = targetArea.top + (monitorHeight - height) / 2;
-    } else {
-        if (info.x.has_value()) {
-            x = static_cast<int>(*info.x);
-        } else {
-            if ((style & WS_POPUP) != 0) {
-                x = targetArea.left;
-            } else {
-                x = CW_USEDEFAULT;
-            }
-        }
-
-        if (info.y.has_value()) {
-            y = static_cast<int>(*info.y);
-        } else {
-            if ((style & WS_POPUP) != 0) {
-                y = targetArea.top;
-            } else {
-                y = CW_USEDEFAULT;
-            }
-        }
-    }
-}
 
 void VeraWin32Window::createNativeWindow(const VeraWindowInfo& info,
                                          DWORD style, DWORD ex_style, int x,
                                          int y, int width, int height) {
     HINSTANCE instance = GetModuleHandleW(nullptr);
     const wchar_t* className = L"VeraWindowClass";
-
-    WNDCLASSEXW wndClass = {sizeof(WNDCLASSEXW)};
-    if (!GetClassInfoExW(instance, className, &wndClass)) {
-        wndClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-        wndClass.lpfnWndProc = VeraWin32Window::windowProcRouter;
-        wndClass.hInstance = instance;
-        wndClass.hCursor = LoadCursorW(nullptr, IDC_ARROW);
-        wndClass.lpszClassName = className;
-
-        RegisterClassExW(&wndClass);
+    if (!utils::registerWindowClass(instance, className,
+                                    VeraWin32Window::windowProcRouter)) {
+        return;
     }
-
     std::wstring wideTitle(info.title.begin(), info.title.end());
-
-    m_hwnd =
-        CreateWindowExW(ex_style, className, wideTitle.c_str(), style, x, y,
-                        width, height, nullptr, nullptr, instance, this);
-
+    m_hwnd = CreateWindowExW(ex_style, className, wideTitle.c_str(), style, x, y,
+                             width, height, nullptr, nullptr, instance, this);
     if (!m_hwnd) {
         return;
     }
-
     if (info.customTitleBar) {
-        VeraHitTestRegions initialRegions{};
-        initialRegions.dragRegion =
-            VeraRect{0, 0, info.width, info.titleBarHeight};
-        m_hit_test_regions = initialRegions;
+        m_hit_test_regions = utils::initializeCustomTitleBar(
+            m_hwnd, info.width, info.titleBarHeight);
+    }
+    utils::showAndFocusWindow(m_hwnd, info);
+    // force it to refresh the window frame if custom title bar is enabled
+    if (info.customTitleBar) {
         SetWindowPos(m_hwnd, nullptr, 0, 0, 0, 0,
                      SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE |
                          SWP_FRAMECHANGED);
-        DWM_WINDOW_CORNER_PREFERENCE preference = DWMWCP_ROUND;
-        DwmSetWindowAttribute(m_hwnd, DWMWA_WINDOW_CORNER_PREFERENCE,
-                              &preference, sizeof(preference));
-    }
-
-    if (info.startVisible) {
-        int showCommand = SW_SHOW;
-        if (info.startMaximized &&
-            info.fullscreenMode == FullScreenMode::Windowed) {
-            showCommand = SW_SHOWMAXIMIZED;
-        } else if (info.startMinimized &&
-                   info.fullscreenMode == FullScreenMode::Windowed) {
-            showCommand = SW_SHOWMINIMIZED;
-        }
-
-        ShowWindow(m_hwnd, showCommand);
-
-        if (info.focusOnShow) {
-            SetForegroundWindow(m_hwnd);
-            SetFocus(m_hwnd);
-        }
     }
 }
 
-LRESULT CALLBACK VeraWin32Window::windowProcRouter(HWND hwnd, UINT msg,
-                                                   WPARAM wparam,
-                                                   LPARAM lparam) {
-    VeraWin32Window* window = nullptr;
 
-    if (msg == WM_NCCREATE) {
-        auto* createStruct = reinterpret_cast<CREATESTRUCTW*>(lparam);
-        window =
-            reinterpret_cast<VeraWin32Window*>(createStruct->lpCreateParams);
-        SetWindowLongPtrW(hwnd, GWLP_USERDATA,
-                          reinterpret_cast<LONG_PTR>(window));
-        window->m_hwnd = hwnd;
-    } else {
-        window = reinterpret_cast<VeraWin32Window*>(
-            GetWindowLongPtrW(hwnd, GWLP_USERDATA));
-    }
-
-    if (window) {
-        return window->handleMessage(msg, wparam, lparam);
-    }
-
-    return DefWindowProcW(hwnd, msg, wparam, lparam);
-}
 
 VeraWin32Window::VeraWin32Window(const VeraWindowInfo& info) {
-    m_handle = generateUniqueHandle();
+    m_handle = utils::generateUniqueHandle();
 
     DWORD style = 0;
     DWORD exStyle = 0;
-    calculateWin32Styles(info, style, exStyle);
+    utils::determineWindowStyles(info, style, exStyle);
 
     int x = CW_USEDEFAULT;
     int y = CW_USEDEFAULT;
     int width = static_cast<int>(info.width);
     int height = static_cast<int>(info.height);
-    calculateWindowDimensions(info, style, exStyle, x, y, width, height);
+    utils::resolveWindowDimensions(info, style, exStyle, x, y, width, height);
 
     createNativeWindow(info, style, exStyle, x, y, width, height);
 }
@@ -635,7 +269,7 @@ void VeraWin32Window::focus() {
 
 void VeraWin32Window::setTitle(const std::string& title) {
     if (!m_hwnd) return;
-    std::wstring wideTitle = utf8ToWstring(title);
+    std::wstring wideTitle = utils::utf8_to_wide(title);
     SetWindowTextW(m_hwnd, wideTitle.c_str());
 }
 
@@ -694,7 +328,7 @@ void VeraWin32Window::setAlwaysOnTop(bool value) {
 
 void VeraWin32Window::setIcon(const std::string& iconPath) {
     if (!m_hwnd) return;
-    std::wstring widePath = utf8ToWstring(iconPath);
+    std::wstring widePath = utils::utf8_to_wide(iconPath);
 
     HICON icon = reinterpret_cast<HICON>(
         LoadImageW(nullptr, widePath.c_str(), IMAGE_ICON, 0, 0,
@@ -839,7 +473,7 @@ VeraMonitorInfo VeraWin32Window::getCurrentMonitor()
     mi.cbSize = sizeof(MONITORINFOEXW);
     if (GetMonitorInfoW(monitor, &mi)) {
         std::wstring wideName(mi.szDevice);
-        info.name = wstringToUtf8(wideName);
+        info.name = utils::wide_to_utf8(wideName);
 
         info.x = mi.rcMonitor.left;
         info.y = mi.rcMonitor.top;
@@ -869,277 +503,6 @@ VeraMonitorInfo VeraWin32Window::getCurrentMonitor()
     return info;
 }
 
-LRESULT VeraWin32Window::handleMessage(UINT msg, WPARAM wparam, LPARAM lparam) {
-    switch (msg) {
-        case WM_NCCALCSIZE: {
-            if (wparam == TRUE && m_hit_test_regions.has_value() &&
-                m_hit_test_regions->dragRegion.has_value()) {
-                return 0;
-            }
-            break;
-        }
-        case WM_GETMINMAXINFO: {
-            auto* mmi = reinterpret_cast<MINMAXINFO*>(lparam);
-            DWORD style =
-                static_cast<DWORD>(GetWindowLongPtrW(m_hwnd, GWL_STYLE));
-            DWORD exStyle =
-                static_cast<DWORD>(GetWindowLongPtrW(m_hwnd, GWL_EXSTYLE));
-            RECT rect = {0, 0, 0, 0};
-            AdjustWindowRectEx(&rect, style, FALSE, exStyle);
-            int borderW = rect.right - rect.left;
-            int borderH = rect.bottom - rect.top;
-
-            if (m_min_width) {
-                mmi->ptMinTrackSize.x =
-                    static_cast<LONG>(*m_min_width) + borderW;
-            }
-            if (m_min_height) {
-                mmi->ptMinTrackSize.y =
-                    static_cast<LONG>(*m_min_height) + borderH;
-            }
-            if (m_max_width) {
-                mmi->ptMaxTrackSize.x =
-                    static_cast<LONG>(*m_max_width) + borderW;
-            }
-            if (m_max_height) {
-                mmi->ptMaxTrackSize.y =
-                    static_cast<LONG>(*m_max_height) + borderH;
-            }
-            return 0;
-        }
-
-        case WM_SIZE: {
-            if (m_resize_callback && wparam != SIZE_MINIMIZED) {
-                m_resize_callback(LOWORD(lparam), HIWORD(lparam));
-            }
-            return 0;
-        }
-
-        case WM_MOVE: {
-            if (m_move_callback) {
-                m_move_callback(static_cast<int16_t>(LOWORD(lparam)),
-                                static_cast<int16_t>(HIWORD(lparam)));
-            }
-            return 0;
-        }
-
-        case WM_ACTIVATE: {
-            if (m_focus_change_callback) {
-                m_focus_change_callback(LOWORD(wparam) != WA_INACTIVE);
-            }
-            return 0;
-        }
-
-        case WM_CLOSE: {
-            if (m_close_request_callback) {
-                if (!m_close_request_callback()) {
-                    return 0;
-                }
-            }
-            DestroyWindow(m_hwnd);
-            return 0;
-        }
-
-        case WM_DESTROY: {
-            m_hwnd = nullptr;
-            notifyDestroyed();
-            return 0;
-        }
-
-        case WM_KEYDOWN:
-        case WM_SYSKEYDOWN:
-        case WM_KEYUP:
-        case WM_SYSKEYUP: {
-            if (m_key_callback) {
-                bool pressed = (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN);
-                bool repeat = pressed && ((lparam & 0x40000000) != 0);
-                VeraKey key = translateWin32Key(wparam, lparam);
-                if (key != VeraKey::Unknown) {
-                    m_key_callback(key, pressed, repeat);
-                }
-            }
-            return 0;
-        }
-
-        case WM_CHAR: {
-            if (m_char_callback) {
-                m_char_callback(static_cast<uint32_t>(wparam));
-            }
-            return 0;
-        }
-
-        case WM_MOUSEMOVE: {
-            int x = LOWORD(lparam);
-            int y = HIWORD(lparam);
-
-            if (!m_mouse_tracked) {
-                TRACKMOUSEEVENT tme = {sizeof(TRACKMOUSEEVENT), TME_LEAVE,
-                                       m_hwnd, HOVER_DEFAULT};
-                TrackMouseEvent(&tme);
-                m_mouse_tracked = true;
-            }
-
-            if (m_mouse_move_callback) {
-                m_mouse_move_callback(static_cast<double>(x),
-                                      static_cast<double>(y));
-            }
-            return 0;
-        }
-        case WM_MOUSELEAVE: {
-            m_mouse_tracked = false;
-            return 0;
-        }
-
-        case WM_LBUTTONDOWN:
-        case WM_LBUTTONUP:
-        case WM_RBUTTONDOWN:
-        case WM_RBUTTONUP:
-        case WM_MBUTTONDOWN:
-        case WM_MBUTTONUP: {
-            if (m_mouse_button_callback) {
-                VeraMouseButton btn = VeraMouseButton::Left;
-                if (msg == WM_RBUTTONDOWN || msg == WM_RBUTTONUP) {
-                    btn = VeraMouseButton::Right;
-                }
-                if (msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP) {
-                    btn = VeraMouseButton::Middle;
-                }
-
-                bool pressed = (msg == WM_LBUTTONDOWN ||
-                                msg == WM_RBUTTONDOWN || msg == WM_MBUTTONDOWN);
-                m_mouse_button_callback(btn, pressed);
-            }
-            return 0;
-        }
-
-        case WM_MOUSEWHEEL: {
-            if (m_scroll_callback) {
-                double offset =
-                    static_cast<double>(GET_WHEEL_DELTA_WPARAM(wparam)) /
-                    WHEEL_DELTA;
-                m_scroll_callback(0.0, offset);
-            }
-            return 0;
-        }
-
-        case WM_PAINT: {
-            PAINTSTRUCT ps;
-            BeginPaint(m_hwnd, &ps);
-            EndPaint(m_hwnd, &ps);
-            return 0;
-        }
-        case WM_ERASEBKGND: {
-            return 1;
-        }
-
-        case WM_SETCURSOR: {
-            int hit = LOWORD(lparam);
-            if (hit == HTCLIENT) {
-                HCURSOR cur = m_current_hcursor
-                                  ? m_current_hcursor
-                                  : LoadCursorW(nullptr, IDC_ARROW);
-                SetCursor(cur);
-                return TRUE;
-            }
-            break;
-        }
-
-        case WM_NCHITTEST: {
-            if (!m_hit_test_regions.has_value()) {
-                break;
-            }
-
-            int x = GET_X_LPARAM(lparam);
-            int y = GET_Y_LPARAM(lparam);
-            POINT pt = {x, y};
-            ScreenToClient(m_hwnd, &pt);
-
-            const int32_t mouseX = static_cast<int32_t>(pt.x);
-            const int32_t mouseY = static_cast<int32_t>(pt.y);
-
-            const int resizeBorderWidth = GetSystemMetrics(SM_CXSIZEFRAME) +
-                                          GetSystemMetrics(SM_CXPADDEDBORDER);
-            RECT rc;
-            GetClientRect(m_hwnd, &rc);
-
-            if (pt.y < resizeBorderWidth) {
-                if (pt.x < resizeBorderWidth) return HTTOPLEFT;
-                if (pt.x >= rc.right - resizeBorderWidth) return HTTOPRIGHT;
-                return HTTOP;
-            }
-            if (pt.y >= rc.bottom - resizeBorderWidth) {
-                if (pt.x < resizeBorderWidth) return HTBOTTOMLEFT;
-                if (pt.x >= rc.right - resizeBorderWidth) {
-                    return HTBOTTOMRIGHT;
-                }
-                return HTBOTTOM;
-            }
-            if (pt.x < resizeBorderWidth) return HTLEFT;
-            if (pt.x >= rc.right - resizeBorderWidth) return HTRIGHT;
-
-            const auto& regions = m_hit_test_regions.value();
-
-            if (regions.closeButton.has_value()) {
-                const auto& rect = regions.closeButton.value();
-                if (mouseX >= static_cast<int32_t>(rect.x) &&
-                    mouseX < static_cast<int32_t>(rect.x + rect.width) &&
-                    mouseY >= static_cast<int32_t>(rect.y) &&
-                    mouseY < static_cast<int32_t>(rect.y + rect.height)) {
-                    return HTCLOSE;
-                }
-            }
-
-            if (regions.maximizeButton.has_value()) {
-                const auto& rect = regions.maximizeButton.value();
-                if (mouseX >= static_cast<int32_t>(rect.x) &&
-                    mouseX < static_cast<int32_t>(rect.x + rect.width) &&
-                    mouseY >= static_cast<int32_t>(rect.y) &&
-                    mouseY < static_cast<int32_t>(rect.y + rect.height)) {
-                    return HTMAXBUTTON;
-                }
-            }
-
-            if (regions.minimizeButton.has_value()) {
-                const auto& rect = regions.minimizeButton.value();
-                if (mouseX >= static_cast<int32_t>(rect.x) &&
-                    mouseX < static_cast<int32_t>(rect.x + rect.width) &&
-                    mouseY >= static_cast<int32_t>(rect.y) &&
-                    mouseY < static_cast<int32_t>(rect.y + rect.height)) {
-                    return HTMINBUTTON;
-                }
-            }
-
-            if (regions.dragRegion.has_value()) {
-                const auto& rect = regions.dragRegion.value();
-                if (mouseX >= static_cast<int32_t>(rect.x) &&
-                    mouseX < static_cast<int32_t>(rect.x + rect.width) &&
-                    mouseY >= static_cast<int32_t>(rect.y) &&
-                    mouseY < static_cast<int32_t>(rect.y + rect.height)) {
-                    return HTCAPTION;
-                }
-            }
-
-            return HTCLIENT;
-        }
-
-        case WM_DPICHANGED: {
-            int dpiX = LOWORD(wparam);
-            if (m_dpi_change_callback) {
-                m_dpi_change_callback(static_cast<float>(dpiX) / 96.0f);
-            }
-            if (lparam) {
-                RECT* suggested = reinterpret_cast<RECT*>(lparam);
-                SetWindowPos(m_hwnd, nullptr, suggested->left, suggested->top,
-                             suggested->right - suggested->left,
-                             suggested->bottom - suggested->top,
-                             SWP_NOZORDER | SWP_NOACTIVATE);
-            }
-            return 0;
-        }
-    }
-
-    return DefWindowProcW(m_hwnd, msg, wparam, lparam);
-}
 
 void VeraWin32Window::setDestroyedNotifier(
     std::function<void(VeraWindowHandle)> notifier) {

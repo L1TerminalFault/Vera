@@ -64,17 +64,19 @@ class VeraWin32Window : public VeraWindow {
     void setDestroyedNotifier(std::function<void(VeraWindowHandle)> notifier);
 
     virtual void setJoystickButtonCallback(
-        VeraJoystickButtonCallback callback) override {};
+        VeraJoystickButtonCallback callback) override {
+        m_joystick_button_callback = std::move(callback);
+    }
     virtual void setJoystickAxisCallback(
-        VeraJoystickAxisCallback callback) override {};
+        VeraJoystickAxisCallback callback) override {
+        m_joystick_axis_callback = std::move(callback);
+    }
+
+    
+    VeraJoystickButtonCallback m_joystick_button_callback{nullptr};
+    VeraJoystickAxisCallback m_joystick_axis_callback{nullptr};
 
    private:
-    VeraWindowHandle generateUniqueHandle();
-    void calculateWin32Styles(const VeraWindowInfo& info, DWORD& style,
-                              DWORD& ex_style) const;
-    void calculateWindowDimensions(const VeraWindowInfo& info, DWORD style,
-                                   DWORD ex_style, int& x, int& y, int& width,
-                                   int& height) const;
     void createNativeWindow(const VeraWindowInfo& info, DWORD style,
                             DWORD ex_style, int x, int y, int width,
                             int height);
@@ -82,7 +84,6 @@ class VeraWin32Window : public VeraWindow {
     static LRESULT CALLBACK windowProcRouter(HWND hwnd, UINT msg, WPARAM wparam,
                                              LPARAM lparam);
 
-    static inline std::atomic<uint64_t> s_next_handle_id{1};
     VeraWindowHandle m_handle;
     HWND m_hwnd = nullptr;
     std::optional<uint32_t> m_min_width;
@@ -122,6 +123,7 @@ class VeraWin32Window : public VeraWindow {
     bool m_mouse_tracked = false;
 
     std::function<void(VeraWindowHandle)> m_destroyedNotifier;
+
 };
 
 #endif
