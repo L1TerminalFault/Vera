@@ -70,4 +70,6 @@ class VeraApp {
     std::vector<std::unique_ptr<VeraWindow>> m_windows;
     std::function<bool()> m_quitRequestCallback;
     bool m_quitRequested = false;
+    std::vector<VeraWindowHandle> m_pendingDestroyed;
+    void drainPendingDestroyed();
 };

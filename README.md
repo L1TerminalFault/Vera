@@ -1,1 +1,31 @@
 # Vera
+
+Vera is a cross-platform **windowing and input library**. That's the whole scope — it opens windows, gives you input, and gets out of your way. It does not render anything for you.
+
+## What Vera does
+
+**Windowing**
+- Multi-window support, with per-window lifecycle (create, show/hide, minimize/maximize/restore, close, focus)
+- Custom title bars: you provide hit-test regions (drag region, minimize/maximize/close button rects) and Vera wires them into the OS's native non-client hit-testing
+- Aero Snap / Windows 11 Snap Layouts work out of the box with custom title bars — the OS draws its native snap-layout flyout on hover over your maximize button, same as a stock decorated window, because Vera routes the hit-test correctly rather than faking a borderless window
+- Fullscreen modes: windowed, borderless, and exclusive
+- Per-window min/max size constraints, resizable/non-resizable, always-on-top, DPI-change notifications
+- Monitor enumeration and per-monitor info (work area, DPI scale, refresh rate)
+- Live resize handling: rendering during an active OS resize drag is supported via the resize callback, so a properly written render loop won't freeze while the user drags an edge
+
+**Input**
+- Keyboard (with correct left/right modifier disambiguation), mouse (buttons, movement, scroll), cursor shape and cursor-lock modes
+- Joystick/gamepad, implemented across all three backends
+- All input is delivered through callbacks attached per-window (key, mouse button, mouse move, scroll, char/text input)
+
+**Backend-level features (once per app):** clipboard read/write, drag-and-drop, system theme query + change notifications, monitor enumeration and display-mode queries, input device enumeration — all implemented across Win32, X11, and Wayland.
+
+**Platforms**
+- Win32, X11, and Wayland are all fully implemented — windowing, custom title bars, input (including joystick), clipboard, drag-and-drop, theme, and monitor queries all work on all three.
+
+## What Vera deliberately does not do
+
+- **No graphics API integration, and no surface-creation helpers.** Vera hands you a raw native handle — `HWND` on Win32, `Window`/`Display` on X11, `wl_surface`/`wl_display` on Wayland — and stops there. Creating a `VkSurfaceKHR` (or a GL context, or anything else) from that handle is entirely on you, on every platform, no exceptions.
+## Why this split
+
+Vera's job ends at "you have a window and you know what the user did to it." Everything downstream — rendering, UI, audio, game logic — is intentionally left to whatever you want to put on top. This keeps Vera usable regardless of which graphics API, renderer, or engine architecture you're building against.

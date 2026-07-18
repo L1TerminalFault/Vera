@@ -68,7 +68,8 @@ class X11Window : public VeraWindow {
         VeraJoystickButtonCallback callback) override;
     virtual void setJoystickAxisCallback(
         VeraJoystickAxisCallback callback) override;
-
+    
+    
     Window xid() const { return m_xid; }
     void handleXEvent(XEvent& event);
 

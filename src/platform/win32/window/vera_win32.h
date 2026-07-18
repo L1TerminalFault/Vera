@@ -60,21 +60,25 @@ class VeraWin32Window : public VeraWindow {
     void setCursorMode(VeraCursorMode mode) override;
     void setCursorShape(VeraCursorShape shape) override;
 
-    core::monitor::VeraMonitorInfo getCurrentMonitor() const override;
-    void setDestroyedNotifier(std::function<void(VeraWindowHandle)> notifier);
+    VeraMonitorInfo getCurrentMonitor() const override;
 
-    virtual void setJoystickButtonCallback(
-        VeraJoystickButtonCallback callback) override {};
-    virtual void setJoystickAxisCallback(
-        VeraJoystickAxisCallback callback) override {};
+    void setJoystickButtonCallback(
+        VeraJoystickButtonCallback callback) override {
+        m_joystick_button_callback = std::move(callback);
+    }
+    void setJoystickAxisCallback(
+        VeraJoystickAxisCallback callback) override {
+        m_joystick_axis_callback = std::move(callback);
+    }
+    void setDestructionCallback(std::function<void(VeraWindow*)> callback) override {
+        m_destruction_callback = std::move(callback);
+    }
+
+    
+    VeraJoystickButtonCallback m_joystick_button_callback{nullptr};
+    VeraJoystickAxisCallback m_joystick_axis_callback{nullptr};
 
    private:
-    VeraWindowHandle generateUniqueHandle();
-    void calculateWin32Styles(const VeraWindowInfo& info, DWORD& style,
-                              DWORD& ex_style) const;
-    void calculateWindowDimensions(const VeraWindowInfo& info, DWORD style,
-                                   DWORD ex_style, int& x, int& y, int& width,
-                                   int& height) const;
     void createNativeWindow(const VeraWindowInfo& info, DWORD style,
                             DWORD ex_style, int x, int y, int width,
                             int height);
@@ -82,7 +86,6 @@ class VeraWin32Window : public VeraWindow {
     static LRESULT CALLBACK windowProcRouter(HWND hwnd, UINT msg, WPARAM wparam,
                                              LPARAM lparam);
 
-    static inline std::atomic<uint64_t> s_next_handle_id{1};
     VeraWindowHandle m_handle;
     HWND m_hwnd = nullptr;
     std::optional<uint32_t> m_min_width;
@@ -101,6 +104,7 @@ class VeraWin32Window : public VeraWindow {
     std::function<bool()> m_close_request_callback;
     std::function<void(bool)> m_focus_change_callback;
     std::function<void(float)> m_dpi_change_callback;
+    std::function<void(VeraWindow*)> m_destruction_callback{ nullptr };
 
     std::function<void(VeraKey, bool, bool)> m_key_callback;
     std::function<void(VeraMouseButton, bool)> m_mouse_button_callback;
@@ -113,15 +117,7 @@ class VeraWin32Window : public VeraWindow {
     VeraCursorShape m_cursor_shape = VeraCursorShape::Arrow;
     HCURSOR m_current_hcursor = nullptr;
 
-    void notifyDestroyed() {
-        if (m_destroyedNotifier) {
-            m_destroyedNotifier(getHandle());
-        }
-    }
-
     bool m_mouse_tracked = false;
-
-    std::function<void(VeraWindowHandle)> m_destroyedNotifier;
 };
 
 #endif

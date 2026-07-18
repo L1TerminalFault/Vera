@@ -66,7 +66,24 @@ class VeraWindow {
 
     virtual VeraMonitorInfo getCurrentMonitor() const = 0;
 
+    void setDestroyedNotifier(std::function<void(VeraWindowHandle)> notifier) {
+        m_destroyedNotifier = std::move(notifier);
+    }
+
     virtual void setJoystickButtonCallback(
         VeraJoystickButtonCallback callback) = 0;
     virtual void setJoystickAxisCallback(VeraJoystickAxisCallback callback) = 0;
+
+    virtual void setDestructionCallback(
+        std::function<void(VeraWindow*)> callback) = 0;
+
+   protected:
+    void notifyDestroyed() {
+        if (m_destroyedNotifier) {
+            m_destroyedNotifier(getHandle());
+        }
+    }
+
+   private:
+    std::function<void(VeraWindowHandle)> m_destroyedNotifier;
 };
