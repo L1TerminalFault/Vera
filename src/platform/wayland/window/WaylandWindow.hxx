@@ -105,8 +105,8 @@ class WaylandWindow : public VeraWindow {
     VeraWindowState m_state{};
     VeraHitTestRegions m_hitTestRegions;
 
-    bool m_customTitleBar = false;
-    bool m_cursorDisabled = false;
+    // bool m_customTitleBar = false;
+    // bool m_cursorDisabled = false;
     bool m_isResizing = false;
     bool m_pendingDeletion = false;
     bool m_isRunning = false;
