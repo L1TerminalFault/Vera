@@ -2,7 +2,7 @@
 
 #include <X11/Xlib.h>
 
-#include "core/input/Keys.h"
+#include "core/app/Types.h"
 #include "platform/x11/internal/X11XKB.hxx"
 
 void handleKeyPressX11(

@@ -2,7 +2,7 @@
 
 #include <X11/Xlib.h>
 
-#include "core/window/Window.h"
+#include "core/app/Types.h"
 #include "platform/x11/input/X11Keyboard.hxx"
 #include "platform/x11/internal/X11Internal.hxx"
 

@@ -7,7 +7,7 @@
 #include <array>
 #include <cstdint>
 
-#include "core/input/Keys.h"
+#include "core/app/Types.h"
 #include "platform/x11/internal/X11Internal.hxx"
 #include "platform/x11/window/X11Window.hxx"
 

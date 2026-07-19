@@ -1,4 +1,13 @@
+#pragma once
+
 #include <cstdlib>
+// #include <expected>
+// #include <functional>
+#include <memory>
+// #include <string>
+// #include <vector>
+
+#include "Types.h"
 
 #if defined(_WIN32)
 #include "platform/win32/Win32Backend.h"
@@ -7,7 +16,7 @@
 #include "platform/x11/X11Backend.hxx"
 #endif
 
-std::unique_ptr<IPlatformBackend> create(const VeraAppInfo& info) {
+std::unique_ptr<IBackend> create(const VeraAppInfo& info) {
 #if defined(_WIN32)
     (void)info;
     return std::make_unique<Win32Backend>();

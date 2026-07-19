@@ -4,7 +4,7 @@
 
 #include <vector>
 
-#include "core/input/Mouse.h"
+#include "core/app/Types.h"
 #include "platform/x11/internal/X11Internal.hxx"
 
 bool initializeXInputX11(X11Context& ctx, int& outOpcode) {

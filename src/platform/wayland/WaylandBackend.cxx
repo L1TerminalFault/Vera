@@ -4,7 +4,6 @@
 #include <cstring>
 #include <iostream>
 
-#include "core/app/AppSettings.h"
 #include "core/app/Types.h"
 #include "platform/wayland/desktop/WaylandClipboard.hxx"
 #include "platform/wayland/desktop/WaylandDragDrop.hxx"

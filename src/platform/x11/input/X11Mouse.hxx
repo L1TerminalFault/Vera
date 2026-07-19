@@ -4,7 +4,7 @@
 
 #include <functional>
 
-#include "core/input/Mouse.h"
+#include "core/app/Types.h"
 
 void handleMouseButtonPressX11(
     XButtonEvent& event,

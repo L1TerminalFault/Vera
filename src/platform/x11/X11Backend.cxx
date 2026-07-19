@@ -3,7 +3,6 @@
 #include <X11/Xlib.h>
 #include <X11/Xlocale.h>
 
-#include "core/app/AppSettings.h"
 #include "platform/x11/events/X11Events.hxx"
 #include "platform/x11/internal/X11XInput2.hxx"
 #include "platform/x11/internal/X11XKB.hxx"

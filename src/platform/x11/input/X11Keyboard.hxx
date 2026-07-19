@@ -2,7 +2,7 @@
 
 #include <functional>
 
-#include "core/input/Keys.h"
+#include "core/app/Types.h"
 #include "platform/x11/internal/X11Internal.hxx"
 
 using KeyStateArray = std::array<bool, static_cast<size_t>(VeraKey::Count)>;

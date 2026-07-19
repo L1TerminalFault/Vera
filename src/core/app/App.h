@@ -6,12 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "AppInfo.h"
-#include "AppSettings.h"
-#include "Error.h"
 #include "Types.h"
-#include "core/platform/IPlatformBackend.h"
-#include "core/window/Window.h"
 
 class VeraApp {
    public:
@@ -22,7 +17,7 @@ class VeraApp {
     VeraApp& operator=(const VeraApp&) = delete;
 
     static std::unique_ptr<VeraApp> forTesting(
-        VeraAppInfo info, std::unique_ptr<IPlatformBackend> backend);
+        VeraAppInfo info, std::unique_ptr<IBackend> backend);
 
     std::expected<VeraWindow*, VeraError> createWindow(
         const VeraWindowInfo& info);
@@ -62,11 +57,11 @@ class VeraApp {
     void applySettings(VeraSettings);
 
    private:
-    VeraApp(VeraAppInfo info, std::unique_ptr<IPlatformBackend> backend,
+    VeraApp(VeraAppInfo info, std::unique_ptr<IBackend> backend,
             bool /*testTag*/);
 
     VeraAppInfo m_appInfo;
-    std::unique_ptr<IPlatformBackend> m_backend;
+    std::unique_ptr<IBackend> m_backend;
     std::vector<std::unique_ptr<VeraWindow>> m_windows;
     std::function<bool()> m_quitRequestCallback;
     bool m_quitRequested = false;

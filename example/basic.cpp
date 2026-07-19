@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "core/app/App.h"
-#include "core/app/AppSettings.h"
 
 int main() {
     VeraAppInfo appInfo{};

@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "core/input/Keys.h"
+#include "core/app/Types.h"
 #include "platform/wayland/internal/protocols/pointer-constraints-unstable-v1-client-protocol.h"
 #include "platform/wayland/internal/protocols/relative-pointer-unstable-v1-client-protocol.h"
 #include "platform/wayland/internal/protocols/xdg-decoration-unstable-v1-client-protocol.h"

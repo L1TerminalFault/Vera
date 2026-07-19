@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/window/Window.h"
+#include "core/app/Types.h"
 #include "platform/wayland/internal/WaylandInternal.hxx"
 #include "platform/wayland/internal/protocols/xdg-shell-client-protocol.h"
 

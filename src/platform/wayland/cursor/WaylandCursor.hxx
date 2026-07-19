@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/input/Mouse.h"
+#include "core/app/Types.h"
 #include "platform/wayland/internal/WaylandInternal.hxx"
 
 void setCursorShapeWayland(WaylandContext& ctx, VeraCursorShape shape);

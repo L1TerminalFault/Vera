@@ -8,7 +8,7 @@
 
 #include <X11/cursorfont.h>
 
-#include "core/input/Mouse.h"
+#include "core/app/Types.h"
 
 void applyCursorModeX11(X11Context& ctx, Window window, VeraCursorMode mode);
 

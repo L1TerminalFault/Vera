@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/input/Joystick.h"
+#include "core/app/Types.h"
 #include "platform/wayland/internal/WaylandInternal.hxx"
 
 void setJoystickButtonCallbackWayland(
