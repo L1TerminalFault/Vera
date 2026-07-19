@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "core/app/App.h"
+#include "core/app/Types.h"
 
 int main() {
     VeraAppInfo appInfo{};
@@ -66,8 +67,8 @@ int main() {
 
         auto windowHandle = window->getHandle().value;
 
-        window->setKeyCallback([windowHandle](VeraKey key, bool pressed,
-                                              bool repeat) {
+        window->setKeyCallback([windowHandle, &app](VeraKey key, bool pressed,
+                                                    bool repeat) {
             std::cout << "[Instance " << windowHandle << "] ";
 
             if (pressed && repeat) {
@@ -78,6 +79,18 @@ int main() {
             } else {
                 std::cout << "Key Released Enum ID: "
                           << static_cast<uint16_t>(key);
+            }
+
+            VeraWindow* win = app.getWindowByHandle(
+                static_cast<VeraWindowHandle>(windowHandle));
+
+            if (win) {
+                bool isKPressed =
+                    (key == VeraKey::K) ? pressed : win->isPressed(VeraKey::K);
+
+                if (isKPressed) {
+                    std::cout << " | K Pressed";
+                }
             }
 
             std::cout << std::endl;

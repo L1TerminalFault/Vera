@@ -4,6 +4,7 @@
 
 #include <cstdint>
 
+// #include "platform/wayland/input/WaylandJoystick.hxx"
 #include "platform/x11/monitor/X11Monitor.hxx"
 #include "platform/x11/window/X11Fullscreen.hxx"
 
@@ -310,4 +311,135 @@ void X11Window::handleXEvent(XEvent& event) {
 void X11Window::setDestructionCallback(
     std::function<void(VeraWindow*)> callback) {
     (void)callback;
+}
+
+// Map platform-specific enum entries to sequential linux joydev button numbers
+static constexpr uint8_t mapToLinuxJoydevButton(VeraJoystickButton button) {
+    switch (button) {
+        // Face Buttons
+        case VeraJoystickButton::Cross:
+        case VeraJoystickButton::XboxA:
+            return 0;
+        case VeraJoystickButton::Circle:
+        case VeraJoystickButton::XboxB:
+            return 1;
+        case VeraJoystickButton::Square:
+        case VeraJoystickButton::XboxX:
+            return 2;
+        case VeraJoystickButton::Triangle:
+        case VeraJoystickButton::XboxY:
+            return 3;
+
+        // Bumpers
+        case VeraJoystickButton::L1:
+        case VeraJoystickButton::XboxLB:
+            return 4;
+        case VeraJoystickButton::R1:
+        case VeraJoystickButton::XboxRB:
+            return 5;
+
+        // Triggers (Digital/Click Emulation)
+        case VeraJoystickButton::L2:
+        case VeraJoystickButton::XboxLT:
+            return 6;
+        case VeraJoystickButton::R2:
+        case VeraJoystickButton::XboxRT:
+            return 7;
+
+        // Menu / System Options
+        case VeraJoystickButton::Share:
+        case VeraJoystickButton::XboxBack:
+            return 8;
+        case VeraJoystickButton::Options:
+        case VeraJoystickButton::XboxStart:
+            return 9;
+        case VeraJoystickButton::PS:
+        case VeraJoystickButton::XboxGuide:
+            return 10;
+
+        // Stick Clicks
+        case VeraJoystickButton::L3:
+        case VeraJoystickButton::XboxLS:
+            return 11;
+        case VeraJoystickButton::R3:
+        case VeraJoystickButton::XboxRS:
+            return 12;
+
+        // Directional D-Pad Fallbacks
+        case VeraJoystickButton::DpadUp:
+            return 13;
+        case VeraJoystickButton::DpadDown:
+            return 14;
+        case VeraJoystickButton::DpadLeft:
+            return 15;
+        case VeraJoystickButton::DpadRight:
+            return 16;
+
+        // Platform Exclusives
+        case VeraJoystickButton::Touchpad:
+            return 17;
+        case VeraJoystickButton::XboxShare:
+            return 18;
+
+        default:
+            return 255;
+    }
+}
+
+bool X11Window::isPressed(VeraPressable input) const {
+    // Rule: If this specific window does not have active system focus,
+    // it shouldn't respond to any input states.
+    if (!this->m_state.isFocused) {
+        return false;
+    }
+
+    return std::visit(
+        [this](auto&& arg) -> bool {
+            using T = std::decay_t<decltype(arg)>;
+
+            // 1. Keyboard State (Read from central context, filtered by window
+            // focus)
+            if constexpr (std::is_same_v<T, VeraKey>) {
+                if (arg == VeraKey::Unknown || arg == VeraKey::Count) {
+                    return false;
+                }
+                size_t keyIndex = static_cast<size_t>(arg);
+                if (keyIndex < std::size(this->m_ctx.keyStates)) {
+                    return this->m_ctx.keyStates[keyIndex];
+                }
+                return false;
+            }
+
+            // 2. Mouse Button State (Read from central context, filtered by
+            // window focus)
+            else if constexpr (std::is_same_v<T, VeraMouseButton>) {
+                if (arg == VeraMouseButton::Count) return false;
+                size_t mouseIndex = static_cast<size_t>(arg);
+                if (mouseIndex < std::size(this->m_ctx.mouseButtonStates)) {
+                    return this->m_ctx.mouseButtonStates[mouseIndex];
+                }
+                return false;
+            }
+
+            // 3. Gamepad Evaluation (Read via cross-file lookup, filtered by
+            // window focus)
+            else if constexpr (std::is_same_v<T, VeraJoystickButton>) {
+                if (arg == VeraJoystickButton::Count) return false;
+                uint8_t rawButtonId = mapToLinuxJoydevButton(arg);
+                if (rawButtonId == 255) return false;
+
+                // Safely cross-query slot 0 via your existing global X11
+                // joystick header system
+                VeraJoystickState joyState =
+                    getJoystickStateX11(this->m_ctx, 0);
+                if (joyState.connected &&
+                    rawButtonId < joyState.buttons.size()) {
+                    return joyState.buttons[rawButtonId];
+                }
+                return false;
+            }
+
+            return false;
+        },
+        input);
 }

@@ -7,6 +7,7 @@
 #include <expected>
 #include <memory>
 
+#include "core/app/Types.h"
 #include "platform/win32/input/joystickXInput.h"
 #include "platform/win32/intern.h"
 #include "platform/win32/utils/win32_utils.h"
@@ -191,3 +192,8 @@ std::vector<VeraInputDeviceInfo> Win32Backend::getInputDevices() const {
 }
 
 VeraNativeHandle Win32Backend::getNativeHandle() const { return {}; }
+
+bool Win32Backend::isPressed(VeraPressable /* button */ ) const {
+  // TODO: do what needs to be done here
+  return false;
+}

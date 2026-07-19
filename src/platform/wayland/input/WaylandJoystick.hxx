@@ -13,6 +13,7 @@ void initializeJoystickWayland(WaylandContext& ctx);
 
 void updateJoystickWayland(WaylandContext& ctx);
 
-VeraJoystickState getStateJoystickWayland(uint32_t joystickId);
+VeraJoystickState getStateJoystickWayland(WaylandContext& ctx,
+                                          uint32_t joystickId);
 
 void shutdownJoystickWayland(WaylandContext& ctx);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/app/IBackend.h"
+#include "core/app/Types.h"
 
 class Win32Backend : public IBackend {
    public:
@@ -36,6 +36,7 @@ class Win32Backend : public IBackend {
     VeraSystemTheme getSystemTheme() const override;
     std::vector<VeraInputDeviceInfo> getInputDevices() const override;
     VeraNativeHandle getNativeHandle() const override;
+    bool isPressed(VeraPressable) const override;
 
    private:
     std::function<bool()> m_quitRequestCallback;

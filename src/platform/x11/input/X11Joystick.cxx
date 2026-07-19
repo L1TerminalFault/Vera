@@ -10,15 +10,9 @@
 #include <functional>
 #include <iostream>
 #include <string>
-#include <vector>
 
-struct JoystickDevice {
-    int fd = -1;
-    std::string devicePath;
-    VeraJoystickState state;
-};
+#include "platform/x11/internal/X11Internal.hxx"
 
-static std::vector<JoystickDevice> gJoysticks(16);
 static std::function<void(uint32_t, uint32_t, bool)> gButtonCallback;
 static std::function<void(uint32_t, uint32_t, float)> gAxisCallback;
 
@@ -43,7 +37,8 @@ void initializeJoystickX11(X11Context& ctx) {
     struct dirent* entry;
     uint32_t slot = 0;
 
-    while ((entry = readdir(devDir)) != nullptr && slot < gJoysticks.size()) {
+    while ((entry = readdir(devDir)) != nullptr &&
+           slot < ctx.joysticks.size()) {
         std::string name(entry->d_name);
         if (name.rfind("js", 0) == 0) {
             std::string path = "/dev/input/" + name;
@@ -57,7 +52,7 @@ void initializeJoystickX11(X11Context& ctx) {
                 ioctl(fd, JSIOCGAXES, &axesCount);
                 ioctl(fd, JSIOCGBUTTONS, &buttonsCount);
 
-                JoystickDevice& joy = gJoysticks[slot];
+                JoystickDeviceX11& joy = ctx.joysticks[slot];
                 joy.fd = fd;
                 joy.devicePath = path;
                 joy.state.name = devName;
@@ -77,8 +72,8 @@ void initializeJoystickX11(X11Context& ctx) {
 void updateJoystickX11(X11Context& ctx) {
     (void)ctx;
 
-    for (size_t i = 0; i < gJoysticks.size(); ++i) {
-        JoystickDevice& joy = gJoysticks[i];
+    for (size_t i = 0; i < ctx.joysticks.size(); ++i) {
+        JoystickDeviceX11& joy = ctx.joysticks[i];
         if (joy.fd < 0) continue;
 
         struct js_event event;
@@ -114,14 +109,16 @@ void updateJoystickX11(X11Context& ctx) {
     }
 }
 
-VeraJoystickState getJoystickStateX11(uint32_t joystickId) {
-    if (joystickId < gJoysticks.size()) return gJoysticks[joystickId].state;
+VeraJoystickState getJoystickStateX11(X11Context& ctx, uint32_t joystickId) {
+    if (joystickId < ctx.joysticks.size()) {
+        return ctx.joysticks[joystickId].state;
+    }
     return VeraJoystickState{};
 }
 
 void shutdownJoystickX11(X11Context& ctx) {
     (void)ctx;
-    for (auto& joy : gJoysticks) {
+    for (auto& joy : ctx.joysticks) {
         if (joy.fd >= 0) close(joy.fd);
         joy.fd = -1;
         joy.state.connected = false;

@@ -6,7 +6,9 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <variant>
 
+// Theme related
 enum class VeraThemeMode : uint8_t { Light = 0, Dark };
 
 enum class VeraLinuxProtocol : uint8_t {
@@ -17,11 +19,13 @@ enum class VeraLinuxProtocol : uint8_t {
 
 enum class VeraSystemTheme { Light, Dark, Unknown };
 
+// Info related
 struct VeraAppInfo {
     bool enablePlatformDebugging = false;
     VeraLinuxProtocol preferedLinuxProtocol = VeraLinuxProtocol::Auto;
 };
 
+// Settings related
 struct KeyRepeatSettings {
     uint32_t delayMs;
     uint32_t rate;
@@ -31,6 +35,7 @@ struct VeraSettings {
     KeyRepeatSettings keyRepeatSettings;
 };
 
+// Error related
 enum class VeraErrorType {
     WindowCreationFailed,
     RemovedNonExistingWindow,
@@ -44,18 +49,7 @@ struct VeraError {
     std::string info;
 };
 
-struct VeraJoystickState {
-    std::string name;
-    bool connected = false;
-    std::vector<float> axes;
-    std::vector<bool> buttons;
-};
-
-using VeraJoystickButtonCallback =
-    std::function<void(uint32_t joyId, uint32_t btn, bool pressed)>;
-using VeraJoystickAxisCallback =
-    std::function<void(uint32_t joyId, uint32_t axis, float val)>;
-
+// Window related
 struct VeraRect {
     uint32_t x = 0;
     uint32_t y = 0;
@@ -126,6 +120,7 @@ struct std::hash<VeraWindowHandle> {
     }
 };
 
+// Key related
 enum class VeraKey : uint16_t {
     Unknown = 0,
 
@@ -262,6 +257,7 @@ enum class VeraKey : uint16_t {
     Count
 };
 
+// Mouse related
 enum class VeraMouseButton : uint8_t {
     Left,
     Right,
@@ -286,11 +282,13 @@ enum class VeraCursorShape : uint8_t {
     Count
 };
 
+// Input related
 struct VeraInputDeviceInfo {
     std::string name;
     bool connected;
 };
 
+// Monitor related
 struct VeraMonitorInfo {
     std::string name;
     int32_t x, y;
@@ -308,6 +306,7 @@ struct VeraDisplayModeInfo {
     uint32_t bitsPerPixel;
 };
 
+// Native handle
 struct VeraNativeHandle {
     void* hwnd = nullptr;
     void* display = nullptr;
@@ -315,20 +314,88 @@ struct VeraNativeHandle {
     void* waylandSurface = nullptr;
 };
 
-// Forward decl
-class VeraWindow;
-
-enum class VeraDragAction { Enter, Over, Drop, Leave };
-
-struct VeraDragEvent {
-    VeraDragAction action;
-    VeraWindow* window;
-    int32_t x, y;
-    std::vector<std::string> paths;
+// Joystick related
+struct VeraJoystickState {
+    std::string name;
+    bool connected = false;
+    std::vector<float> axes;
+    std::vector<bool> buttons;
 };
 
-using VeraDragCallback = std::function<bool(const VeraDragEvent&)>;
+using VeraJoystickButtonCallback =
+    std::function<void(uint32_t joyId, uint32_t btn, bool pressed)>;
+using VeraJoystickAxisCallback =
+    std::function<void(uint32_t joyId, uint32_t axis, float val)>;
 
+enum class VeraJoystickButton : uint8_t {
+    // Matched by same opcodes
+    // Face Buttons
+    //  - PlayStation
+    Cross,
+    Circle,
+    Square,
+    Triangle,
+    //  - Xbox
+    XboxA,
+    XboxB,
+    XboxX,
+    XboxY,
+
+    // Bumpers
+    //  - PlayStation
+    L1,
+    R1,
+    //  - Xbox
+    XboxLB,
+    XboxRB,
+
+    // Triggers (Digital/Click states)
+    //  - PlayStation
+    L2,
+    R2,
+    //  - Xbox
+    XboxLT,
+    XboxRT,
+
+    // Stick Clicks
+    //  - PlayStation
+    L3,
+    R3,
+    //  - Xbox
+    XboxLS,
+    XboxRS,
+
+    // Menu and System Buttons
+    //  - PlayStation
+    Share,
+    Options,
+    PS,
+    //  - Xbox
+    XboxBack,   // View
+    XboxStart,  // Menu
+    XboxGuide,
+
+    // Platform-Specific Exclusives
+    //  - PlayStation
+    Touchpad,  // PlayStation: Touchpad Click (Unmapped on Xbox)
+    //  - Xbox
+    XboxShare,  // Dedicated Series X|S Capture button (Unmapped on PS)
+
+    // Directional D-Pad Same on both platforms
+    DpadUp,
+    DpadDown,
+    DpadLeft,
+    DpadRight,
+
+    Count
+};
+
+// Joining all pressables
+using VeraPressable =
+    std::variant<VeraKey, VeraMouseButton, VeraJoystickButton>;
+
+// Window interface - leaving it cuz the backend needs to have some context to
+// call createWindow
 class VeraWindow {
    public:
     virtual ~VeraWindow() = default;
@@ -379,6 +446,7 @@ class VeraWindow {
         std::function<void(double xOffset, double yOffset)> callback) = 0;
     virtual void setCharCallback(
         std::function<void(uint32_t codepoint)> callback) = 0;
+    virtual bool isPressed(VeraPressable) const = 0;
 
     virtual void setCursorMode(VeraCursorMode mode) = 0;
     virtual void setCursorShape(VeraCursorShape shape) = 0;
@@ -407,6 +475,19 @@ class VeraWindow {
     std::function<void(VeraWindowHandle)> m_destroyedNotifier;
 };
 
+// Drag related
+enum class VeraDragAction { Enter, Over, Drop, Leave };
+
+struct VeraDragEvent {
+    VeraDragAction action;
+    VeraWindow* window;
+    int32_t x, y;
+    std::vector<std::string> paths;
+};
+
+using VeraDragCallback = std::function<bool(const VeraDragEvent&)>;
+
+// Backend Interface
 class IBackend {
    public:
     virtual ~IBackend() = default;

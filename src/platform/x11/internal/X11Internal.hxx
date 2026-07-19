@@ -63,6 +63,12 @@ struct KeyRepeatStateX11 {
     std::chrono::steady_clock::time_point nextRepeat;
 };
 
+struct JoystickDeviceX11 {
+    int fd = -1;
+    std::string devicePath;
+    VeraJoystickState state;
+};
+
 struct X11Context {
     Display* display = nullptr;
     int screen = 0;
@@ -82,7 +88,16 @@ struct X11Context {
 
     uint64_t nextHandleValue = 1;
 
+    bool keyStates[static_cast<size_t>(VeraKey::Count)] = {false};
+    bool mouseButtonStates[static_cast<size_t>(VeraMouseButton::Count)] = {
+        false};
+
     VeraWindowHandle allocateHandle() {
         return VeraWindowHandle{nextHandleValue++};
     }
+
+    // Allocate space for up to 16 controller slots directly managed in context
+    // memory
+    std::vector<JoystickDeviceX11> joysticks =
+        std::vector<JoystickDeviceX11>(16);
 };

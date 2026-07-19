@@ -1,6 +1,6 @@
 #include "core/app/App.h"
 
-#include "IBackend.h"
+#include "Backend.h"
 
 VeraApp::VeraApp(VeraAppInfo info) : m_appInfo(info), m_backend(create(info)) {
     if (m_backend) {

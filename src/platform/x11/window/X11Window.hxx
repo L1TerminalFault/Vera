@@ -70,6 +70,7 @@ class X11Window : public VeraWindow {
 
     void setDestructionCallback(
         std::function<void(VeraWindow*)> callback) override;
+    bool isPressed(VeraPressable) const override;
 
     const auto& getKeyCallback() const { return m_keyCallback; }
     const auto& getCharCallback() const { return m_charCallback; }

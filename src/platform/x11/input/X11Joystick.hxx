@@ -13,6 +13,6 @@ void initializeJoystickX11(X11Context& ctx);
 
 void updateJoystickX11(X11Context& ctx);
 
-VeraJoystickState getJoystickStateX11(uint32_t joystickId);
+VeraJoystickState getJoystickStateX11(X11Context& ctx, uint32_t joystickId);
 
 void shutdownJoystickX11(X11Context& ctx);
