@@ -503,7 +503,9 @@ class VeraWindow {
         std::function<void(double xOffset, double yOffset)> callback) = 0;
     virtual void setCharCallback(
         std::function<void(uint32_t codepoint)> callback) = 0;
-    virtual bool isPressed(VeraPressable) const = 0;
+
+    // FIX: What the fuck is happening
+    virtual bool isPressed(VeraPressable button) const = 0;
 
     virtual void setCursorMode(VeraCursorMode mode) = 0;
     virtual void setCursorShape(VeraCursorShape shape) = 0;
