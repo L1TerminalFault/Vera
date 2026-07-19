@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "core/monitor/Monitor.h"
+#include "core/app/Types.h"
 #include "platform/x11/internal/X11Internal.hxx"
 
 bool initializeXRandRX11(X11Context& ctx);

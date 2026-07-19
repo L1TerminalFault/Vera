@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/window/DragDrop.h"
+#include "core/app/Types.h"
 #include "platform/wayland/internal/WaylandInternal.hxx"
 
 void initializeDnDWayland(WaylandContext& ctx);

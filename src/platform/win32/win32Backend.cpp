@@ -1,17 +1,17 @@
-#include "platform/win32/Win32Backend.h"
+#include "platform/win32/win32Backend.h"
 
 #include <shellscalingapi.h>
 
+#include <bit>
 #include <cstring>
 #include <expected>
 #include <memory>
-#include <bit>
 
+#include "core/app/Types.h"
+#include "platform/win32/input/joystickXInput.h"
 #include "platform/win32/intern.h"
 #include "platform/win32/utils/win32_utils.h"
-#include "platform/win32/input/joystickXInput.h"
 #include "platform/win32/window/vera_win32.h"
-
 
 std::expected<std::unique_ptr<VeraWindow>, VeraError>
 Win32Backend::createWindow(const VeraWindowInfo& info) {
@@ -192,3 +192,8 @@ std::vector<VeraInputDeviceInfo> Win32Backend::getInputDevices() const {
 }
 
 VeraNativeHandle Win32Backend::getNativeHandle() const { return {}; }
+
+bool Win32Backend::isPressed(VeraPressable /* button */ ) const {
+  // TODO: do what needs to be done here
+  return false;
+}

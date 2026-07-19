@@ -1,5 +1,4 @@
-#include "core/window/Window.h"
-#include "core/window/WindowTypes.h"
+#include "core/app/Types.h"
 
 #if defined(VERA_PLATFORM_WIN32)
 #pragma once
@@ -66,15 +65,14 @@ class VeraWin32Window : public VeraWindow {
         VeraJoystickButtonCallback callback) override {
         m_joystick_button_callback = std::move(callback);
     }
-    void setJoystickAxisCallback(
-        VeraJoystickAxisCallback callback) override {
+    void setJoystickAxisCallback(VeraJoystickAxisCallback callback) override {
         m_joystick_axis_callback = std::move(callback);
     }
-    void setDestructionCallback(std::function<void(VeraWindow*)> callback) override {
+    void setDestructionCallback(
+        std::function<void(VeraWindow*)> callback) override {
         m_destruction_callback = std::move(callback);
     }
 
-    
     VeraJoystickButtonCallback m_joystick_button_callback{nullptr};
     VeraJoystickAxisCallback m_joystick_axis_callback{nullptr};
 
@@ -104,7 +102,7 @@ class VeraWin32Window : public VeraWindow {
     std::function<bool()> m_close_request_callback;
     std::function<void(bool)> m_focus_change_callback;
     std::function<void(float)> m_dpi_change_callback;
-    std::function<void(VeraWindow*)> m_destruction_callback{ nullptr };
+    std::function<void(VeraWindow*)> m_destruction_callback{nullptr};
 
     std::function<void(VeraKey, bool, bool)> m_key_callback;
     std::function<void(VeraMouseButton, bool)> m_mouse_button_callback;

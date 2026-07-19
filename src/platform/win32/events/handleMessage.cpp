@@ -1,10 +1,13 @@
-#include "platform/win32/window/vera_win32.h"
-#include "platform/win32/utils/keyTranslationMap.h"
-#include "platform/win32/utils/eventUtils.h"
 #include <bit>
+
+#include "platform/win32/utils/eventUtils.h"
+#include "platform/win32/utils/keyTranslationMap.h"
+#include "platform/win32/window/vera_win32.h"
+
 #ifndef WIN32_LEAN_AND_MEAN
-    #define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #endif
+
 #include <windows.h>
 #include <windowsx.h>
 
@@ -159,8 +162,9 @@ LRESULT VeraWin32Window::handleMessage(UINT msg, WPARAM wparam, LPARAM lparam) {
             break;
         }
         case WM_NCHITTEST: {
-            return utils::executeNonClientHitTest(m_hit_test_regions,m_hwnd,GET_X_LPARAM(lparam),
-                                           GET_Y_LPARAM(lparam));
+            return utils::executeNonClientHitTest(m_hit_test_regions, m_hwnd,
+                                                  GET_X_LPARAM(lparam),
+                                                  GET_Y_LPARAM(lparam));
         }
         case WM_DPICHANGED: {
             int dpiX = LOWORD(wparam);

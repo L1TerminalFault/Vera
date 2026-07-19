@@ -1,7 +1,6 @@
 #include "core/app/App.h"
 
-#include "core/app/AppSettings.h"
-#include "core/platform/PlatformFactory.h"
+#include "Backend.h"
 
 VeraApp::VeraApp(VeraAppInfo info) : m_appInfo(info), m_backend(create(info)) {
     if (m_backend) {
@@ -13,14 +12,13 @@ VeraApp::VeraApp(VeraAppInfo info) : m_appInfo(info), m_backend(create(info)) {
     }
 }
 
-VeraApp::VeraApp(VeraAppInfo info, std::unique_ptr<IPlatformBackend> backend,
-                 bool)
+VeraApp::VeraApp(VeraAppInfo info, std::unique_ptr<IBackend> backend, bool)
     : m_appInfo(info), m_backend(std::move(backend)) {}
 
 VeraApp::~VeraApp() = default;
 
 std::unique_ptr<VeraApp> VeraApp::forTesting(
-    VeraAppInfo info, std::unique_ptr<IPlatformBackend> backend) {
+    VeraAppInfo info, std::unique_ptr<IBackend> backend) {
     return std::unique_ptr<VeraApp>(
         new VeraApp(info, std::move(backend), true));
 }
@@ -70,21 +68,22 @@ std::vector<VeraWindow*> VeraApp::getAllWindows() const {
 
 void VeraApp::pollEvents() {
     if (m_backend) m_backend->pollEvents();
-     drainPendingDestroyed();
+    drainPendingDestroyed();
 }
 void VeraApp::waitEvents() {
     if (m_backend) m_backend->waitEvents();
-     drainPendingDestroyed();
+    drainPendingDestroyed();
 }
 void VeraApp::waitEventsTimeout(double timeoutSeconds) {
     if (m_backend) m_backend->waitEventsTimeout(timeoutSeconds);
-     drainPendingDestroyed();
+    drainPendingDestroyed();
 }
 
 void VeraApp::drainPendingDestroyed() {
     for (VeraWindowHandle handle : m_pendingDestroyed) {
-        std::erase_if(m_windows,
-                      [handle](const auto& win) { return win->getHandle() == handle; });
+        std::erase_if(m_windows, [handle](const auto& win) {
+            return win->getHandle() == handle;
+        });
     }
     m_pendingDestroyed.clear();
 }

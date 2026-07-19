@@ -2,7 +2,7 @@
 
 #include <functional>
 
-#include "core/app/AppInfo.h"
+#include "core/app/Types.h"
 #include "platform/x11/internal/X11Internal.hxx"
 
 void initializeThemeX11(X11Context& ctx);

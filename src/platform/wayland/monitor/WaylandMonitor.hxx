@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/monitor/Monitor.h"
+#include "core/app/Types.h"
 #include "platform/wayland/internal/WaylandInternal.hxx"
 
 std::vector<VeraMonitorInfo> getMonitorsWayland(const WaylandContext& ctx);

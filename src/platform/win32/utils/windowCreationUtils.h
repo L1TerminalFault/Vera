@@ -1,10 +1,11 @@
 #pragma once
-#include "core/window/WindowTypes.h"
+
+#include "core/app/Types.h"
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
-#include <windows.h>
 #include <dwmapi.h>
+#include <windows.h>
 
 #include <string>
 
@@ -160,8 +161,9 @@ inline void resolveWindowDimensions(const VeraWindowInfo& info, DWORD style,
  * @brief Registers the Win32 window class if it hasn't been registered yet.
  * @return True if registration succeeded or already exists, false otherwise.
  */
-[[nodiscard]] inline bool registerWindowClass(HINSTANCE instance, const wchar_t* className,
-                                WNDPROC wndProc) {
+[[nodiscard]] inline bool registerWindowClass(HINSTANCE instance,
+                                              const wchar_t* className,
+                                              WNDPROC wndProc) {
     WNDCLASSEXW wndClass{};
     // if already registered check
     if (GetClassInfoExW(instance, className, &wndClass)) {
@@ -182,8 +184,8 @@ inline void resolveWindowDimensions(const VeraWindowInfo& info, DWORD style,
  * @brief Configures custom title bar regions and DWM window corner preferences.
  * @return The initial VeraHitTestRegions configured for the window.
  */
-[[nodiscard]] inline VeraHitTestRegions initializeCustomTitleBar(HWND hwnd, uint32_t width,
-                                                   uint32_t titleBarHeight) {
+[[nodiscard]] inline VeraHitTestRegions initializeCustomTitleBar(
+    HWND hwnd, uint32_t width, uint32_t titleBarHeight) {
     // forces it to recalculate
     SetWindowPos(hwnd, nullptr, 0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE |

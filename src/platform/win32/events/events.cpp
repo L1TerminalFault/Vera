@@ -1,10 +1,12 @@
-#include "platform/win32/window/vera_win32.h"
 #include <bit>
-#ifndef WIN32_LEAN_AND_MEAN
-    #define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
 
+#include "platform/win32/window/vera_win32.h"
+
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#include <windows.h>
 
 LRESULT CALLBACK VeraWin32Window::windowProcRouter(HWND hwnd, UINT msg,
                                                    WPARAM wparam,
@@ -23,4 +25,3 @@ LRESULT CALLBACK VeraWin32Window::windowProcRouter(HWND hwnd, UINT msg,
     }
     return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
-

@@ -1,11 +1,9 @@
 #pragma once
 
-#include "core/app/AppSettings.h"
 #include "core/app/Types.h"
-#include "core/platform/IPlatformBackend.h"
 #include "platform/x11/internal/X11Internal.hxx"
 
-class X11Backend : public IPlatformBackend {
+class X11Backend : public IBackend {
    public:
     X11Backend() = default;
     ~X11Backend() override;

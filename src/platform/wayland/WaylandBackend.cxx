@@ -4,7 +4,6 @@
 #include <cstring>
 #include <iostream>
 
-#include "core/app/AppSettings.h"
 #include "core/app/Types.h"
 #include "platform/wayland/desktop/WaylandClipboard.hxx"
 #include "platform/wayland/desktop/WaylandDragDrop.hxx"
@@ -286,3 +285,133 @@ void WaylandBackend::applySettings(VeraSettings settings) {
     m_ctx.keyRepeatDelay = settings.keyRepeatSettings.delayMs;
     m_ctx.keyRepeatRate = settings.keyRepeatSettings.rate;
 }
+
+// Internal conversion mapping platform-specific enum entries to linux joydev
+// button numbers
+// static constexpr uint8_t mapToLinuxJoydevButton(VeraJoystickButton button) {
+//     switch (button) {
+//         // Face Buttons
+//         case VeraJoystickButton::Cross:
+//         case VeraJoystickButton::XboxA:
+//             return 0;
+//         case VeraJoystickButton::Circle:
+//         case VeraJoystickButton::XboxB:
+//             return 1;
+//         case VeraJoystickButton::Square:
+//         case VeraJoystickButton::XboxX:
+//             return 2;
+//         case VeraJoystickButton::Triangle:
+//         case VeraJoystickButton::XboxY:
+//             return 3;
+//
+//         // Bumpers
+//         case VeraJoystickButton::L1:
+//         case VeraJoystickButton::XboxLB:
+//             return 4;
+//         case VeraJoystickButton::R1:
+//         case VeraJoystickButton::XboxRB:
+//             return 5;
+//
+//         // Triggers (Digital/Click Emulation)
+//         case VeraJoystickButton::L2:
+//         case VeraJoystickButton::XboxLT:
+//             return 6;
+//         case VeraJoystickButton::R2:
+//         case VeraJoystickButton::XboxRT:
+//             return 7;
+//
+//         // Menu / System Options
+//         case VeraJoystickButton::Share:
+//         case VeraJoystickButton::XboxBack:
+//             return 8;
+//         case VeraJoystickButton::Options:
+//         case VeraJoystickButton::XboxStart:
+//             return 9;
+//         case VeraJoystickButton::PS:
+//         case VeraJoystickButton::XboxGuide:
+//             return 10;
+//
+//         // Stick Clicks
+//         case VeraJoystickButton::L3:
+//         case VeraJoystickButton::XboxLS:
+//             return 11;
+//         case VeraJoystickButton::R3:
+//         case VeraJoystickButton::XboxRS:
+//             return 12;
+//
+//         // Directional D-Pad Fallbacks
+//         case VeraJoystickButton::DpadUp:
+//             return 13;
+//         case VeraJoystickButton::DpadDown:
+//             return 14;
+//         case VeraJoystickButton::DpadLeft:
+//             return 15;
+//         case VeraJoystickButton::DpadRight:
+//             return 16;
+//
+//         // Platform Exclusives
+//         case VeraJoystickButton::Touchpad:
+//             return 17;
+//         case VeraJoystickButton::XboxShare:
+//             return 18;
+//
+//         default:
+//             return 255;
+//     }
+// }
+
+// bool WaylandBackend::isPressed(VeraPressable input) const {
+//     return std::visit(
+//         [this](auto&& arg) -> bool {
+//             using T = std::decay_t<decltype(arg)>;
+//
+//             // 1. Keyboard Input Evaluation
+//             if constexpr (std::is_same_v<T, VeraKey>) {
+//                 if (arg == VeraKey::Unknown || arg == VeraKey::Count) {
+//                     return false;
+//                 }
+//                 size_t keyIndex = static_cast<size_t>(arg);
+//                 if (keyIndex < std::size(m_ctx.keyStates)) {
+//                     return m_ctx.keyStates[keyIndex];
+//                 }
+//                 return false;
+//             }
+//
+//             // 2. Mouse Input Evaluation
+//             else if constexpr (std::is_same_v<T, VeraMouseButton>) {
+//                 if (arg == VeraMouseButton::Count) {
+//                     return false;
+//                 }
+//                 size_t mouseIndex = static_cast<size_t>(arg);
+//                 if (mouseIndex < std::size(m_ctx.mouseButtonStates)) {
+//                     return m_ctx.mouseButtonStates[mouseIndex];
+//                 }
+//                 return false;
+//             }
+//
+//             // 3. Gamepad Input Evaluation via Member Context
+//             else if constexpr (std::is_same_v<T, VeraJoystickButton>) {
+//                 if (arg == VeraJoystickButton::Count) {
+//                     return false;
+//                 }
+//
+//                 uint8_t rawButtonId = mapToLinuxJoydevButton(arg);
+//                 if (rawButtonId == 255) {
+//                     return false;
+//                 }
+//
+//                 // Directly query Slot 0 from the m_ctx encapsulation array
+//                 if (!m_ctx.joysticks.empty()) {
+//                     const auto& primaryJoy = m_ctx.joysticks[0];
+//                     if (primaryJoy.fd >= 0 &&
+//                         rawButtonId < primaryJoy.state.buttons.size()) {
+//                         return primaryJoy.state.buttons[rawButtonId];
+//                     }
+//                 }
+//                 return false;
+//             }
+//
+//             return false;
+//         },
+//         input);
+// }

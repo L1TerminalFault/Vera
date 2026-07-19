@@ -2,13 +2,16 @@
 
 #include <X11/extensions/Xrandr.h>
 #include <sys/select.h>
+#include <unistd.h>
 
+#include <chrono>
 #include <cstdint>
 #include <functional>
 
 #include "platform/x11/desktop/X11Clipboard.hxx"
 #include "platform/x11/desktop/X11DragDrop.hxx"
 #include "platform/x11/desktop/X11Theme.hxx"
+#include "platform/x11/input/X11Joystick.hxx"
 #include "platform/x11/window/X11Window.hxx"
 
 static int gRandrEventBase = 0;
@@ -103,6 +106,9 @@ void pollEventsX11(X11Context& ctx,
         XRRQueryExtension(ctx.display, &gRandrEventBase, &errorBase);
     }
 
+    // Read non-blocking input updates from controller drivers
+    updateJoystickX11(ctx);
+
     while (XPending(ctx.display) > 0) {
         XEvent event;
         XNextEvent(ctx.display, &event);
@@ -115,30 +121,58 @@ void pollEventsX11(X11Context& ctx,
 void waitForEventsX11(X11Context& ctx,
                       const std::function<bool()>& quitRequestCallback,
                       const std::function<void()>& displayChangeCallback) {
-    XEvent event;
-    XNextEvent(ctx.display, &event);
-    dispatchOne(ctx, event, quitRequestCallback, displayChangeCallback);
-    pollEventsX11(ctx, quitRequestCallback, displayChangeCallback);
+    if (XPending(ctx.display) > 0) {
+        pollEventsX11(ctx, quitRequestCallback, displayChangeCallback);
+        return;
+    }
+
+    // Direct fallback into our multi-device select handler using a safe 10ms
+    // responsive step
+    waitForEventsWithTimeoutX11(ctx, 0.010, quitRequestCallback,
+                                displayChangeCallback);
 }
 
 void waitForEventsWithTimeoutX11(
     X11Context& ctx, double timeoutSeconds,
     const std::function<bool()>& quitRequestCallback,
     const std::function<void()>& displayChangeCallback) {
+    // Refresh joystick state maps before evaluating thread blocks
+    updateJoystickX11(ctx);
+
     if (XPending(ctx.display) > 0) {
         pollEventsX11(ctx, quitRequestCallback, displayChangeCallback);
         return;
     }
 
-    int fd = ConnectionNumber(ctx.display);
+    int x11Fd = ConnectionNumber(ctx.display);
+    int maxFd = x11Fd;
+
     fd_set fds;
     FD_ZERO(&fds);
-    FD_SET(fd, &fds);
+    FD_SET(x11Fd, &fds);
+
+    // Multiplex all active context joystick file descriptors directly into
+    // select
+    for (const auto& joy : ctx.joysticks) {
+        if (joy.fd >= 0) {
+            FD_SET(joy.fd, &fds);
+            if (joy.fd > maxFd) {
+                maxFd = joy.fd;
+            }
+        }
+    }
+
     timeval tv;
     tv.tv_sec = static_cast<int64_t>(timeoutSeconds);
     tv.tv_usec = static_cast<int64_t>((timeoutSeconds - tv.tv_sec) * 1'000'000);
 
-    if (select(fd + 1, &fds, nullptr, nullptr, &tv) > 0) {
+    // Thread wakes immediately when X11 messages arrive OR joystick events fire
+    if (select(maxFd + 1, &fds, nullptr, nullptr, &tv) > 0) {
         pollEventsX11(ctx, quitRequestCallback, displayChangeCallback);
+    } else {
+        // Fallback update to process joystick disconnection rules and edge
+        // clocks on timeouts
+        updateJoystickX11(ctx);
+        processKeyRepeat(&ctx);
     }
 }

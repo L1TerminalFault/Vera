@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-#include "core/monitor/Monitor.h"
 #include "platform/win32/utils/keyTranslationMap.h"
 #include "platform/win32/utils/win32_utils.h"
 #include "platform/win32/utils/windowCreationUtils.h"
@@ -503,4 +502,3 @@ VeraMonitorInfo VeraWin32Window::getCurrentMonitor() const {
 
     return info;
 }
-

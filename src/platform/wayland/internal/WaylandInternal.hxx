@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "core/input/Keys.h"
+#include "core/app/Types.h"
 #include "platform/wayland/internal/protocols/pointer-constraints-unstable-v1-client-protocol.h"
 #include "platform/wayland/internal/protocols/relative-pointer-unstable-v1-client-protocol.h"
 #include "platform/wayland/internal/protocols/xdg-decoration-unstable-v1-client-protocol.h"
@@ -38,6 +38,12 @@ struct KeyRepeatStateWayland {
     uint32_t scanCode;
     VeraKey veraKey;
     std::chrono::steady_clock::time_point nextRepeat;
+};
+
+struct JoystickDeviceWayland {
+    int fd = -1;
+    std::string devicePath;
+    VeraJoystickState state;
 };
 
 struct WaylandContext {
@@ -88,6 +94,14 @@ struct WaylandContext {
     zwp_locked_pointer_v1* activeLockedPointer = nullptr;
     zwp_confined_pointer_v1* activeConfinedPointer = nullptr;
     zwp_relative_pointer_v1* activeRelativePointer = nullptr;
+    bool keyStates[static_cast<size_t>(VeraKey::Count)] = {false};
+    bool mouseButtonStates[static_cast<size_t>(VeraMouseButton::Count)] = {
+        false};
+
+    // Allocate space for up to 16 controller slots directly managed in context
+    // memory
+    std::vector<JoystickDeviceWayland> joysticks =
+        std::vector<JoystickDeviceWayland>(16);
 
     bool isFullscreen = false;
     bool isMaximized = false;

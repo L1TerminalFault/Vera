@@ -1,10 +1,9 @@
 #pragma once
 
-#include "core/app/AppSettings.h"
-#include "core/platform/IPlatformBackend.h"
+#include "core/app/Types.h"
 #include "platform/wayland/internal/WaylandInternal.hxx"
 
-class WaylandBackend : public IPlatformBackend {
+class WaylandBackend : public IBackend {
    public:
     WaylandBackend() = default;
     ~WaylandBackend() override;

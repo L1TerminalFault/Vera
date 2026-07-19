@@ -5,7 +5,7 @@
 #endif
 #include <windows.h>
 
-#include "core/input/Keys.h"  // Includes the VeraKey enum definition
+#include "core/app/Types.h"  // Includes the VeraKey enum definition
 
 namespace utils {
 

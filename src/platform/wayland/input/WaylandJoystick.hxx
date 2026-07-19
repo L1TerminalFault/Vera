@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/input/Joystick.h"
+#include "core/app/Types.h"
 #include "platform/wayland/internal/WaylandInternal.hxx"
 
 void setJoystickButtonCallbackWayland(
@@ -13,6 +13,7 @@ void initializeJoystickWayland(WaylandContext& ctx);
 
 void updateJoystickWayland(WaylandContext& ctx);
 
-VeraJoystickState getStateJoystickWayland(uint32_t joystickId);
+VeraJoystickState getStateJoystickWayland(WaylandContext& ctx,
+                                          uint32_t joystickId);
 
 void shutdownJoystickWayland(WaylandContext& ctx);

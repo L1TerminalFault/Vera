@@ -2,7 +2,7 @@
 
 #include <X11/Xlib.h>
 
-#include "core/window/Window.h"
+#include "core/app/Types.h"
 #include "platform/x11/input/X11Keyboard.hxx"
 #include "platform/x11/internal/X11Internal.hxx"
 
@@ -70,6 +70,7 @@ class X11Window : public VeraWindow {
 
     void setDestructionCallback(
         std::function<void(VeraWindow*)> callback) override;
+    bool isPressed(VeraPressable) const override;
 
     const auto& getKeyCallback() const { return m_keyCallback; }
     const auto& getCharCallback() const { return m_charCallback; }

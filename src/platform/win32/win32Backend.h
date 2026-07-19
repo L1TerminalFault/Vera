@@ -1,8 +1,8 @@
 #pragma once
 
-#include "core/platform/IPlatformBackend.h"
+#include "core/app/Types.h"
 
-class Win32Backend : public IPlatformBackend {
+class Win32Backend : public IBackend {
    public:
     Win32Backend() = default;
     ~Win32Backend() override = default;
@@ -36,6 +36,7 @@ class Win32Backend : public IPlatformBackend {
     VeraSystemTheme getSystemTheme() const override;
     std::vector<VeraInputDeviceInfo> getInputDevices() const override;
     VeraNativeHandle getNativeHandle() const override;
+    bool isPressed(VeraPressable) const override;
 
    private:
     std::function<bool()> m_quitRequestCallback;

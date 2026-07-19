@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/window/Window.h"
+#include "core/app/Types.h"
 #include "platform/wayland/internal/WaylandInternal.hxx"
 #include "platform/wayland/internal/protocols/xdg-shell-client-protocol.h"
 
@@ -64,6 +64,7 @@ class WaylandWindow : public VeraWindow {
 
     void setDestructionCallback(
         std::function<void(VeraWindow*)> callback) override;
+    bool isPressed(VeraPressable) const override;
 
     const auto& getKeyCallback() const { return m_keyCallback; }
     const auto& getCharCallback() const { return m_charCallback; }

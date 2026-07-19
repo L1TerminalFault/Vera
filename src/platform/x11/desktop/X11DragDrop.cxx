@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <sstream>
 
-#include "core/window/Window.h"
+#include "core/app/Types.h"
 
 static VeraDragCallback gCallback;
 static Window gSourceWindow = 0;

@@ -2,7 +2,7 @@
 
 #include <linux/input-event-codes.h>
 
-#include "core/input/Mouse.h"
+#include "core/app/Types.h"
 #include "platform/wayland/window/WaylandWindow.hxx"
 
 static double sPointerX = 0.0;
