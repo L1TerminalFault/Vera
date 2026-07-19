@@ -88,6 +88,7 @@ class WaylandWindow : public VeraWindow {
 
     bool isPendingDeletion() { return m_pendingDeletion; }
     bool isRunning() { return m_isRunning; }
+    bool hasGraphicsContext() const { return m_hasGraphicsContext; }
 
    private:
     void initSurface(const VeraWindowInfo& info);
