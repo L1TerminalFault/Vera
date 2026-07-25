@@ -1,6 +1,7 @@
 #include "core/app/App.h"
 
 #include "Backend.h"
+#include "core/app/Types.h"
 
 VeraApp::VeraApp(VeraAppInfo info) : m_appInfo(info), m_backend(create(info)) {
     if (m_backend) {
@@ -148,4 +149,8 @@ VeraNativeHandle VeraApp::getNativeHandle() const {
 
 void VeraApp::applySettings(VeraSettings settings) {
     m_backend->applySettings(settings);
+}
+
+void VeraApp::setCursorShape(VeraCursorShape cursh) const {
+    m_backend->setCursorShape(cursh);
 }

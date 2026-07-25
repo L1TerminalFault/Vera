@@ -1,5 +1,4 @@
-﻿#include <filesystem>
-#include <iostream>
+﻿#include <iostream>
 #include <string>
 #include <vector>
 
@@ -16,8 +15,8 @@ int main() {
     std::cout << "--- Testing VeraShell Linux Services ---" << std::endl;
 
     // 1. Play System Sound
-    std::cout << "[Shell Test] Playing Notification sound..." << std::endl;
-    shell.playSound(SystemSound::Notification);
+    // std::cout << "[Shell Test] Playing Notification sound..." << std::endl;
+    // shell.playSound(SystemSound::Notification);
 
     // 2. Desktop Notification
     NotificationOptions notifOpts{};
@@ -32,16 +31,16 @@ int main() {
         std::cout << "[Shell Test] Notification posted with ID: "
                   << notifResult.notificationId << std::endl;
     }
-
-    // 3. Power Management (Prevent System Sleep)
+    //
+    // // 3. Power Management (Prevent System Sleep)
     SleepRequest sleepReq{};
     sleepReq.target = SleepTarget::System;
     sleepReq.reason = "Vera test suite active instance running";
     if (shell.preventSleep(sleepReq)) {
         std::cout << "[Shell Test] Sleep inhibition activated." << std::endl;
     }
-
-    // 4. System Tray Creation
+    //
+    // // 4. System Tray Creation
     TrayOptions trayOpts{};
     trayOpts.id = "vera-test-tray";
     trayOpts.title = "Vera Test Application";
@@ -87,40 +86,43 @@ int main() {
     }
 
     // 8. Message Dialog Interface Test
-    std::cout << "[Shell Test] Spawning interactive question dialog..."
-              << std::endl;
-    DialogOptions diagOpts{};
-    diagOpts.title = "Vera Verification Engine";
-    diagOpts.message =
-        "Do you want to continue initialization of the file picker test "
-        "layers?";
-    diagOpts.icon = DialogIcon::Question;
-    // diagOpts.buttons = {DialogButton::Yes, DialogButton::No};
+    // std::cout << "[Shell Test] Spawning interactive question dialog..."
+    //           << std::endl;
+    // DialogOptions diagOpts{};
+    // diagOpts.title = "Vera Verification Engine";
+    // diagOpts.message =
+    //     "Do you want to continue initialization of the file picker test "
+    //     "layers?";
+    // diagOpts.icon = DialogIcon::Question;
+    // // diagOpts.buttons = {DialogButton::Yes, DialogButton::No};
 
-    DialogResult diagResult = shell.showDialog(diagOpts);
-    if (diagResult.button != DialogButton::Yes) {
-        std::cout
-            << "[Shell Test] User rejected test phase initialization. Exiting."
-            << std::endl;
-        return 0;
-    }
-    std::cout << "[Shell Test] User verified dialog action: YES." << std::endl;
+    // DialogResult diagResult = shell.showDialog(diagOpts);
+    // if (diagResult.button != DialogButton::Yes) {
+    //     std::cout
+    //         << "[Shell Test] User rejected test phase initialization.
+    //         Exiting."
+    //         << std::endl;
+    //     return 0;
+    // }
+    // std::cout << "[Shell Test] User verified dialog action: YES." <<
+    // std::endl;
 
     // 9. Open File Dialog Test
-    std::cout << "[Shell Test] Spawning Open File Dialog..." << std::endl;
-    FileDialogOptions openOpts{};
-    openOpts.title = "Select Source Asset Configuration File";
-    openOpts.defaultPath =
-        std::filesystem::current_path();  // Default to runtime execution folder
+    // std::cout << "[Shell Test] Spawning Open File Dialog..." << std::endl;
+    // FileDialogOptions openOpts{};
+    // openOpts.title = "Select Source Asset Configuration File";
+    // openOpts.defaultPath =
+    //     std::filesystem::current_path();  // Default to runtime execution
+    //     folder
 
-    std::filesystem::path chosenOpenPath = shell.openFileDialog(openOpts);
-    if (!chosenOpenPath.empty()) {
-        std::cout << "[Shell Test] Target file selected for opening: "
-                  << chosenOpenPath << std::endl;
-    } else {
-        std::cout << "[Shell Test] Open File Dialog cancelled by user."
-                  << std::endl;
-    }
+    // std::filesystem::path chosenOpenPath = shell.openFileDialog(openOpts);
+    // if (!chosenOpenPath.empty()) {
+    //     std::cout << "[Shell Test] Target file selected for opening: "
+    //               << chosenOpenPath << std::endl;
+    // } else {
+    //     std::cout << "[Shell Test] Open File Dialog cancelled by user."
+    //               << std::endl;
+    // }
     //
     // // 10. Save File Dialog Test
     // std::cout << "[Shell Test] Spawning Save File Dialog..." << std::endl;
@@ -153,7 +155,7 @@ int main() {
     app.applySettings(settings);
 
     std::vector<VeraWindow*> activeWindows;
-    const int windowCount = 3;
+    const int windowCount = 1;
 
     for (int i = 0; i < windowCount; ++i) {
         VeraWindowInfo winInfo{};

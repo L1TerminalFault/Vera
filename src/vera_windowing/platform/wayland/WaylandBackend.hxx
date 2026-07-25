@@ -41,6 +41,7 @@ class WaylandBackend : public IBackend {
     std::vector<VeraInputDeviceInfo> getInputDevices() const override;
     VeraNativeHandle getNativeHandle() const override;
     void applySettings(VeraSettings) override;
+    void setCursorShape(VeraCursorShape) override;
 
     WaylandContext& getContext() { return m_ctx; }
     const WaylandContext& getContext() const { return m_ctx; }

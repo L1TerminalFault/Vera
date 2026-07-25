@@ -21,21 +21,33 @@ class LinuxTray {
 
         sOptions = topts;
         bool threadReady = false;
+        bool threadSuccess = false;
         std::mutex readyMutex;
         std::condition_variable readyCv;
 
-        // Spin up a completely isolated background worker thread
         sWorkerThread = std::thread([&]() {
-            // 1. Force this thread to use its own isolated event context
             GMainContext* privateContext = g_main_context_new();
             g_main_context_push_thread_default(privateContext);
+
+            auto signalFailure = [&]() {
+                {
+                    std::lock_guard<std::mutex> readyLock(readyMutex);
+                    threadReady = true;
+                    threadSuccess = false;
+                }
+                readyCv.notify_one();
+                g_main_context_pop_thread_default(privateContext);
+                g_main_context_unref(privateContext);
+            };
 
             GError* error = nullptr;
             sBus = g_bus_get_sync(G_BUS_TYPE_SESSION, nullptr, &error);
             if (!sBus) {
-                if (error) g_error_free(error);
-                g_main_context_pop_thread_default(privateContext);
-                g_main_context_unref(privateContext);
+                if (error) {
+                    g_printerr("[Tray Error] Bus failed: %s\n", error->message);
+                    g_error_free(error);
+                }
+                signalFailure();
                 return;
             }
 
@@ -55,7 +67,7 @@ class LinuxTray {
                 "    <property name='Title' type='s' access='read'/>"
                 "    <property name='Status' type='s' access='read'/>"
                 "    <property name='IconName' type='s' access='read'/>"
-                "    <property name='ToolTip' type='(ssss)' access='read'/>"
+                "    <property name='ToolTip' type='(sa(iiay)ss)' access='read'/>"
                 "    <signal name='NewTitle'/>"
                 "    <signal name='NewIcon'/>"
                 "    <signal name='NewStatus'/>"
@@ -63,10 +75,14 @@ class LinuxTray {
                 "  </interface>"
                 "</node>";
 
+            error = nullptr;
             GDBusNodeInfo* nodeInfo =
                 g_dbus_node_info_new_for_xml(introspectionXml, &error);
             if (error) {
+                g_printerr("[Tray Error] XML Parse Error: %s\n",
+                           error->message);
                 g_error_free(error);
+                signalFailure();
                 return;
             }
 
@@ -79,53 +95,47 @@ class LinuxTray {
                 [](GDBusConnection*, const char*, const char*, const char*,
                    const char* propertyName, GError**, gpointer) -> GVariant* {
                     std::lock_guard<std::mutex> propLock(sMutex);
-                    if (std::string(propertyName) == "Category") {
+                    std::string prop(propertyName);
+                    if (prop == "Category")
                         return g_variant_new_string("ApplicationStatus");
-                    }
-                    if (std::string(propertyName) == "Id") {
+                    if (prop == "Id")
                         return g_variant_new_string(sOptions.id.c_str());
-                    }
-                    if (std::string(propertyName) == "Title") {
+                    if (prop == "Title")
                         return g_variant_new_string(sOptions.title.c_str());
-                    }
-                    if (std::string(propertyName) == "Status") {
-                        return g_variant_new_string("Active");
-                    }
-                    if (std::string(propertyName) == "IconName") {
+                    if (prop == "Status") return g_variant_new_string("Active");
+                    if (prop == "IconName")
                         return g_variant_new_string(sOptions.iconName.c_str());
-                    }
-                    if (std::string(propertyName) == "ToolTip") {
-                        GVariantBuilder arrayBuilder;
-                        g_variant_builder_init(&arrayBuilder,
-                                               G_VARIANT_TYPE("a(iiay)"));
-                        GVariant* emptyIconData =
-                            g_variant_builder_end(&arrayBuilder);
-
-                        return g_variant_new(
-                            "(s@a(iiay)ss)", sOptions.iconName.c_str(),
-                            emptyIconData, sOptions.title.c_str(),
-                            sOptions.tooltip.c_str());
-                    }
-                    return nullptr;
+                    if (prop == "ToolTip") {
+    // Generates a valid (sa(iiay)ss) structure with an empty image byte array
+    return g_variant_new(
+        "(s@a(iiay)ss)", 
+        sOptions.iconName.c_str(),                  // Icon Name
+        g_variant_new_array(G_VARIANT_TYPE("(iiay)"), nullptr, 0), // Empty Icon Data
+        sOptions.title.c_str(),                     // Tooltip Title
+        sOptions.tooltip.c_str()                    // Tooltip Description
+    );
+}
+return nullptr;
                 },
                 nullptr,
                 {nullptr}};
 
+            error = nullptr;
             sRegistrationId = g_dbus_connection_register_object(
-                sBus, sObjectPath.c_str(),
-                nodeInfo->interfaces[0],  // Explicitly pass the interface index
-                                          // object pointer
+                sBus, sObjectPath.c_str(), nodeInfo->interfaces[0],
                 &interfaceVtable, nullptr, nullptr, &error);
 
             g_dbus_node_info_unref(nodeInfo);
 
             if (error) {
+                g_printerr("[Tray Error] Registration failed: %s\n",
+                           error->message);
                 g_error_free(error);
+                signalFailure();
                 return;
             }
 
-            // Register our background-hosted item with the central system
-            // watcher
+            error = nullptr;
             GVariant* reply = g_dbus_connection_call_sync(
                 sBus, "org.kde.StatusNotifierWatcher", "/StatusNotifierWatcher",
                 "org.kde.StatusNotifierWatcher", "RegisterStatusNotifierItem",
@@ -133,40 +143,38 @@ class LinuxTray {
                 G_DBUS_CALL_FLAGS_NONE, -1, nullptr, &error);
 
             if (error) {
+                g_printerr(
+                    "[Tray Warning] Host Host Environment lacks a Tray "
+                    "Watcher: %s\n",
+                    error->message);
                 g_error_free(error);
-                return;
+                // Non-fatal bypass: some desktop extensions attach items
+                // retrospectively
             }
             if (reply) g_variant_unref(reply);
 
-            // Instantiate main loop on our private context layout
             sMainLoop = g_main_loop_new(privateContext, FALSE);
 
-            // 2. Safe notification handshake: Tell the main thread we are fully
-            // up and looping
             {
                 std::lock_guard<std::mutex> readyLock(readyMutex);
                 threadReady = true;
+                threadSuccess = true;
                 sIsCreated = true;
             }
             readyCv.notify_one();
 
-            // Loop blocks here independently on the worker thread, serving
-            // incoming queries instantly
             g_main_loop_run(sMainLoop);
 
-            // Cleanup when loop quits
             g_main_loop_unref(sMainLoop);
             sMainLoop = nullptr;
             g_main_context_pop_thread_default(privateContext);
             g_main_context_unref(privateContext);
         });
 
-        // 3. Main thread blocks safely via Condition Variable until the worker
-        // thread is ready
         std::unique_lock<std::mutex> readyLock(readyMutex);
         readyCv.wait(readyLock, [&] { return threadReady; });
 
-        return true;
+        return threadSuccess;
     }
 
     static bool updateTray(const TrayUpdate& tupdt) {

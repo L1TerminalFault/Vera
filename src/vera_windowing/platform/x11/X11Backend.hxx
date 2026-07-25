@@ -40,6 +40,7 @@ class X11Backend : public IBackend {
     std::vector<VeraInputDeviceInfo> getInputDevices() const override;
     VeraNativeHandle getNativeHandle() const override;
     void applySettings(VeraSettings) override;
+    void setCursorShape(VeraCursorShape) override;
 
    private:
     mutable X11Context m_ctx;

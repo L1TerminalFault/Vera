@@ -2,6 +2,7 @@
 
 #include <wayland-client.h>
 #include <wayland-cursor.h>
+#include <wayland-server.h>
 #include <xkbcommon/xkbcommon.h>
 
 #include <chrono>
@@ -86,6 +87,13 @@ struct WaylandContext {
     wl_data_offer* activeClipboardOffer = nullptr;
     wl_cursor_theme* cursorTheme = nullptr;
     wl_surface* cursorSurface = nullptr;
+
+    wl_cursor* currentCursor = nullptr;
+    uint32_t currentFrameIndex = 0;
+    wl_event_source* cursorAnimationTimer = nullptr;
+    bool isCursorAnimating;
+    std::chrono::steady_clock::time_point lastFrameTime;
+    VeraCursorShape pendingShape = VeraCursorShape::Arrow;
 
     double pointerX = 0.0;
     double pointerY = 0.0;

@@ -55,6 +55,7 @@ class VeraApp {
     std::vector<VeraInputDeviceInfo> getInputDevices() const;
     VeraNativeHandle getNativeHandle() const;
     void applySettings(VeraSettings);
+    void setCursorShape(VeraCursorShape) const;
 
    private:
     VeraApp(VeraAppInfo info, std::unique_ptr<IBackend> backend,

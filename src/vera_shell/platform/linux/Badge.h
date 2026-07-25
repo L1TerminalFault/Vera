@@ -13,24 +13,30 @@ class LinuxBadge {
             return false;
         }
 
-        // Standard Unity Launcher DBus URI format for desktop launchers
-        std::string appUri = "application://" + sanitizeAppId(bopts.appId);
+        // Must match your app's actual .desktop filename
+        std::string sanitizedId = sanitizeAppId(bopts.appId);
+        std::string appUri = "application://" + sanitizedId;
 
         // Build properties dictionary: a{sv} (array of string -> variant)
         GVariantBuilder builder;
         g_variant_builder_init(&builder, G_VARIANT_TYPE("a{sv}"));
 
-        // Add Badge Count properties
+        // 1. Core Unity Count fields
         g_variant_builder_add(
             &builder, "{sv}", "count",
             g_variant_new_int64(static_cast<gint64>(bopts.count)));
         g_variant_builder_add(
             &builder, "{sv}", "count-visible",
-            g_variant_new_boolean(bopts.countVisible ? TRUE : FALSE));
+            g_variant_new_boolean(bopts.countVisible && bopts.count > 0));
+
+        // 2. Add urgency flag (triggers dock bounces/highlights in KDE & GNOME)
+        g_variant_builder_add(
+            &builder, "{sv}", "urgent",
+            g_variant_new_boolean(
+                (bopts.countVisible && bopts.count > 0) ? TRUE : FALSE));
 
         GVariant* properties = g_variant_builder_end(&builder);
 
-        // Send D-Bus signal to desktop environment dock/launcher
         return emitDbusSignal(appUri.c_str(), properties);
     }
 
@@ -49,7 +55,6 @@ class LinuxBadge {
     static bool emitDbusSignal(const char* appUri, GVariant* properties) {
         GError* error = nullptr;
 
-        // Get session bus connection
         GDBusConnection* bus =
             g_bus_get_sync(G_BUS_TYPE_SESSION, nullptr, &error);
         if (!bus) {
@@ -57,17 +62,17 @@ class LinuxBadge {
             return false;
         }
 
-        // Emit the Update signal defined by com.canonical.Unity.LauncherEntry
+        // g_dbus_connection_emit_signal consumes floating references.
+        // We wrap parameters explicitly.
+        GVariant* signalBody = g_variant_new("(s@a{sv})", appUri, properties);
+
         gboolean success = g_dbus_connection_emit_signal(
             bus,
-            nullptr,                               // Destination bus name
+            nullptr,  // Destination (null = broadcast signal)
             "/com/canonical/unity/launcherentry",  // Object path
             "com.canonical.Unity.LauncherEntry",   // Interface name
             "Update",                              // Signal name
-
-            // Fix: Add '@' before the container type to safely pass
-            // 'properties'
-            g_variant_new("(s@a{sv})", appUri, properties), &error);
+            signalBody, &error);
 
         if (error) {
             g_error_free(error);
@@ -77,7 +82,6 @@ class LinuxBadge {
         return success != 0;
     }
 
-    // Ensures desktop ID extension matches expectations (.desktop)
     static std::string sanitizeAppId(const std::string& input) {
         if (input.size() < 8 || input.substr(input.size() - 8) != ".desktop") {
             return input + ".desktop";

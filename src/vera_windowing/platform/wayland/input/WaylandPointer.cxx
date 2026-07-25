@@ -5,6 +5,9 @@
 #include "core/app/Types.h"
 #include "platform/wayland/window/WaylandWindow.hxx"
 
+// Assuming your implementation or utility header defines this function:
+extern void applyCursorToWayland(WaylandContext& ctx, uint32_t serial);
+
 static double sPointerX = 0.0;
 static double sPointerY = 0.0;
 static WaylandWindow* sPointerTargetWindow = nullptr;
@@ -30,8 +33,10 @@ static void pointerHandleEnter(void* data, wl_pointer* pointer, uint32_t serial,
                                wl_surface* surface, wl_fixed_t sx,
                                wl_fixed_t sy) {
     auto* ctx = static_cast<WaylandContext*>(data);
-    (void)pointer;
-    (void)serial;
+
+    // 1. Un-suppress and map input arguments to the operational context
+    ctx->pointer = pointer;
+    ctx->pointerSerial = serial;
 
     auto it = ctx->windowsBySurface.find(surface);
     if (it != ctx->windowsBySurface.end()) {
@@ -39,15 +44,24 @@ static void pointerHandleEnter(void* data, wl_pointer* pointer, uint32_t serial,
         sPointerX = wl_fixed_to_double(sx);
         sPointerY = wl_fixed_to_double(sy);
     }
+
+    // 2. Commit your stored cursor configuration with the active validation
+    // token
+    applyCursorToWayland(*ctx, serial);
 }
 
 static void pointerHandleLeave(void* data, wl_pointer* pointer, uint32_t serial,
                                wl_surface* surface) {
-    (void)data;
+    auto* ctx = static_cast<WaylandContext*>(data);
     (void)pointer;
     (void)serial;
     (void)surface;
+
+    // Invalidate state mapping flags
     sPointerTargetWindow = nullptr;
+    if (ctx) {
+        ctx->pointerSerial = 0;
+    }
 }
 
 static void pointerHandleMotion(void* data, wl_pointer* pointer, uint32_t time,
@@ -64,11 +78,15 @@ static void pointerHandleButton(void* data, wl_pointer* pointer,
                                 uint32_t state) {
     auto* ctx = static_cast<WaylandContext*>(data);
     (void)pointer;
-    (void)serial;
     (void)time;
-    (void)ctx;
 
     if (!sPointerTargetWindow) return;
+
+    // Optional but recommended: Update pointer token on structural button
+    // presses
+    if (ctx) {
+        ctx->pointerSerial = serial;
+    }
 
     VeraMouseButton veraButton = translateMouseButton(button);
     bool pressed = (state == WL_POINTER_BUTTON_STATE_PRESSED);

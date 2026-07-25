@@ -581,4 +581,5 @@ class IBackend {
     virtual std::vector<VeraInputDeviceInfo> getInputDevices() const = 0;
     virtual VeraNativeHandle getNativeHandle() const = 0;
     virtual void applySettings(VeraSettings) = 0;
+    virtual void setCursorShape(VeraCursorShape) = 0;
 };

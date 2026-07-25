@@ -7,3 +7,7 @@ void setCursorShapeWayland(WaylandContext& ctx, VeraCursorShape shape);
 
 void setCursorModeWayland(WaylandContext& ctx, wl_surface* surface,
                           VeraCursorMode mode);
+
+void applyCursorToWayland(WaylandContext&, uint32_t);
+
+void updateCursorAnimation(WaylandContext& ctx);
