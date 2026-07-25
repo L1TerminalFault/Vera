@@ -1,11 +1,150 @@
-﻿#include <iostream>
+﻿#include <filesystem>
+#include <iostream>
 #include <string>
 #include <vector>
 
 #include "core/app/App.h"
 #include "core/app/Types.h"
+#include "core_shell/Shell.h"
 
 int main() {
+    // -------------------------------------------------------------------------
+    // Initialize VeraShell & Perform OS Feature Test Calls
+    // -------------------------------------------------------------------------
+    VeraShell shell;
+
+    std::cout << "--- Testing VeraShell Linux Services ---" << std::endl;
+
+    // 1. Play System Sound
+    std::cout << "[Shell Test] Playing Notification sound..." << std::endl;
+    shell.playSound(SystemSound::Notification);
+
+    // 2. Desktop Notification
+    NotificationOptions notifOpts{};
+    notifOpts.title = "Vera Application Started";
+    notifOpts.body = "All Linux shell services initialized successfully.";
+    notifOpts.appName = "VeraApp";
+    notifOpts.icon = "dialog-information";
+    notifOpts.urgency = NotificationUrgency::Normal;
+
+    auto notifResult = shell.showNotification(notifOpts);
+    if (notifResult.success) {
+        std::cout << "[Shell Test] Notification posted with ID: "
+                  << notifResult.notificationId << std::endl;
+    }
+
+    // 3. Power Management (Prevent System Sleep)
+    SleepRequest sleepReq{};
+    sleepReq.target = SleepTarget::System;
+    sleepReq.reason = "Vera test suite active instance running";
+    if (shell.preventSleep(sleepReq)) {
+        std::cout << "[Shell Test] Sleep inhibition activated." << std::endl;
+    }
+
+    // 4. System Tray Creation
+    TrayOptions trayOpts{};
+    trayOpts.id = "vera-test-tray";
+    trayOpts.title = "Vera Test Application";
+    trayOpts.tooltip = "Vera Instance Monitor";
+    trayOpts.iconName = "application-x-executable";
+    trayOpts.menuItems = {{"item1", "Open Monitor", true, false, false,
+                           []() { std::cout << "Tray: Open clicked\n"; }},
+                          {"item2", "Exit", true, false, false,
+                           []() { std::cout << "Tray: Exit clicked\n"; }}};
+
+    if (shell.createTray(trayOpts)) {
+        std::cout << "[Shell Test] System tray icon registered." << std::endl;
+    }
+
+    // 5. App Icon Badge Counter Test
+    std::cout << "[Shell Test] Updating application badge count..."
+              << std::endl;
+    BadgeOptions badgeOpts{};
+    badgeOpts.appId = "vera_example";
+    badgeOpts.count = 42;
+    badgeOpts.countVisible = true;
+    if (shell.setBadge(badgeOpts)) {
+        std::cout << "[Shell Test] Badge count set to 42." << std::endl;
+    }
+
+    // 6. Launcher Dock Progress Bar Test
+    std::cout << "[Shell Test] Updating launcher progress status..."
+              << std::endl;
+    ProgressOptions progOpts{};
+    progOpts.appId = "vera_example";
+    progOpts.progress = 0.75;
+    progOpts.progressVisible = true;
+    if (shell.setProgress(progOpts)) {
+        std::cout << "[Shell Test] Progress bar set to 75%." << std::endl;
+    }
+
+    // 7. Request Application Attention (Urgent Flag)
+    std::cout << "[Shell Test] Requesting dock window attention..."
+              << std::endl;
+    if (shell.requestAttention(AttentionType::Critical, "vera_example")) {
+        std::cout << "[Shell Test] Urgent attention signal broadcasted."
+                  << std::endl;
+    }
+
+    // 8. Message Dialog Interface Test
+    std::cout << "[Shell Test] Spawning interactive question dialog..."
+              << std::endl;
+    DialogOptions diagOpts{};
+    diagOpts.title = "Vera Verification Engine";
+    diagOpts.message =
+        "Do you want to continue initialization of the file picker test "
+        "layers?";
+    diagOpts.icon = DialogIcon::Question;
+    // diagOpts.buttons = {DialogButton::Yes, DialogButton::No};
+
+    DialogResult diagResult = shell.showDialog(diagOpts);
+    if (diagResult.button != DialogButton::Yes) {
+        std::cout
+            << "[Shell Test] User rejected test phase initialization. Exiting."
+            << std::endl;
+        return 0;
+    }
+    std::cout << "[Shell Test] User verified dialog action: YES." << std::endl;
+
+    // 9. Open File Dialog Test
+    std::cout << "[Shell Test] Spawning Open File Dialog..." << std::endl;
+    FileDialogOptions openOpts{};
+    openOpts.title = "Select Source Asset Configuration File";
+    openOpts.defaultPath =
+        std::filesystem::current_path();  // Default to runtime execution folder
+
+    std::filesystem::path chosenOpenPath = shell.openFileDialog(openOpts);
+    if (!chosenOpenPath.empty()) {
+        std::cout << "[Shell Test] Target file selected for opening: "
+                  << chosenOpenPath << std::endl;
+    } else {
+        std::cout << "[Shell Test] Open File Dialog cancelled by user."
+                  << std::endl;
+    }
+    //
+    // // 10. Save File Dialog Test
+    // std::cout << "[Shell Test] Spawning Save File Dialog..." << std::endl;
+    // SaveFileDialogOptions saveOpts{};
+    // saveOpts.title = "Export Render Target Output Matrix";
+    // saveOpts.defaultPath = std::filesystem::current_path();
+    // saveOpts.defaultName = "untitled_export.json";
+    //
+    // std::filesystem::path chosenSavePath = shell.saveFileDialog(saveOpts);
+    // if (!chosenSavePath.empty()) {
+    //     std::cout << "[Shell Test] Target destination designated for saving:
+    //     "
+    //               << chosenSavePath << std::endl;
+    // } else {
+    //     std::cout << "[Shell Test] Save File Dialog cancelled by user."
+    //               << std::endl;
+    // }
+    //
+    // std::cout << "---------------------------------------" << std::endl
+    //           << std::endl;
+    //
+    // -------------------------------------------------------------------------
+    // Application Initialization & Window Loop
+    // -------------------------------------------------------------------------
     VeraAppInfo appInfo{};
     appInfo.enablePlatformDebugging = true;
 
@@ -58,17 +197,21 @@ int main() {
             window->setTitlebarHitTestRegions(dynamicRegions);
         });
 
-        window->setCloseRequestCallback([&app, window]() -> bool {
+        window->setCloseRequestCallback([&app, window, &shell]() -> bool {
             std::cout << "[Instance " << window->getHandle().value
                       << "] Close request approved." << std::endl;
+
+            // Play sound when window closes
+            shell.playSound(SystemSound::Success);
+
             app.destroyWindow(window);
             return true;
         });
 
         auto windowHandle = window->getHandle().value;
 
-        window->setKeyCallback([windowHandle, &app](VeraKey key, bool pressed,
-                                                    bool repeat) {
+        window->setKeyCallback([windowHandle, &app, &shell](
+                                   VeraKey key, bool pressed, bool repeat) {
             std::cout << "[Instance " << windowHandle << "] ";
 
             if (pressed && repeat) {
@@ -91,6 +234,9 @@ int main() {
 
                 if (isKPressed) {
                     std::cout << " | K Pressed";
+                    // Request dock/window attention on pressing K
+                    shell.requestAttention(AttentionType::Informational,
+                                           "Window requested focus");
                 }
             }
 
@@ -103,9 +249,16 @@ int main() {
         });
     }
 
+    // Main Event Loop
     while (app.getWindowCount() > 0) {
         app.pollEvents();
     }
+
+    // -------------------------------------------------------------------------
+    // Cleanup Shell Services
+    // -------------------------------------------------------------------------
+    shell.allowSleep(SleepTarget::System);
+    shell.removeTray();
 
     std::cout << "All 3 windows closed cleanly. Vera shutting down."
               << std::endl;
