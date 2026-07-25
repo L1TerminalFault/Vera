@@ -143,28 +143,38 @@ WaylandWindow::~WaylandWindow() { destroySurface(); }
 void WaylandWindow::initSurface(const VeraWindowInfo& info) {
     if (!m_ctx.compositor || !m_ctx.wmBase) return;
     m_isResizing = false;
-
     m_surface = wl_compositor_create_surface(m_ctx.compositor);
     if (!m_surface) return;
 
     // Defensively resolve the monitor scale factor
     auto monitorInfo = getPrimaryMonitorWayland(m_ctx);
-    int32_t scale = monitorInfo.dpiScale;
+
+    // wl_surface_set_buffer_scale only accepts INTEGERS. For fractional
+    // scales (e.g. 1.333333 = 4/3), we must round UP, not truncate —
+    // truncating silently drops the fractional part and causes the
+    // compositor to upscale our already-rendered frame, producing a
+    // double-antialiased/blurry result. Rounding up means we render at a
+    // higher resolution than strictly necessary and let the compositor
+    // scale DOWN slightly, which preserves sharpness (downscaling from a
+    // higher-res buffer looks fine; upscaling from a lower-res buffer does
+    // not).
+    int32_t scale = static_cast<int32_t>(std::ceil(monitorInfo.dpiScale));
 
     // STRICT GUARD: Wayland protocol will instantly crash if scale < 1
     if (scale < 1) {
         scale = 1;
     }
+
     wl_surface_set_buffer_scale(m_surface, scale);
 
     m_ctx.windowsBySurface[m_surface] = this;
 
     m_xdgSurface = xdg_wm_base_get_xdg_surface(m_ctx.wmBase, m_surface);
-    if (!m_xdgSurface) return;  // Defensive early exit
+    if (!m_xdgSurface) return;
     xdg_surface_add_listener(m_xdgSurface, &KXDG_SURFACE_LISTENER, this);
 
     m_xdgToplevel = xdg_surface_get_toplevel(m_xdgSurface);
-    if (!m_xdgToplevel) return;  // Defensive early exit
+    if (!m_xdgToplevel) return;
     xdg_toplevel_add_listener(m_xdgToplevel, &KXDG_TOP_LEVEL_LISTENER, this);
 
     xdg_toplevel_set_title(m_xdgToplevel, info.title.c_str());
