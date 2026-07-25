@@ -159,8 +159,7 @@ static const wl_pointer_listener KPOINTER_LISTENER = {
     .axis_stop = pointerHandleAxisStop,
     .axis_discrete = pointerHandleAxisDiscrete,
     .axis_value120 = nullptr,
-    .axis_relative_direction = nullptr,
-    .warp = nullptr};
+    .axis_relative_direction = nullptr};
 
 void addListenerToPointer(WaylandContext& ctx, wl_pointer* pointer) {
     if (pointer) {
