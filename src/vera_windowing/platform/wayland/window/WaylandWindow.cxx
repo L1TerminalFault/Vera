@@ -165,7 +165,7 @@ void WaylandWindow::initSurface(const VeraWindowInfo& info) {
         scale = 1;
     }
 
-    wl_surface_set_buffer_scale(m_surface, scale);
+    wl_surface_set_buffer_scale(m_surface, 1);
 
     m_ctx.windowsBySurface[m_surface] = this;
 

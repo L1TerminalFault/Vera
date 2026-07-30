@@ -64,9 +64,12 @@ static void pointerHandleButton(void* data, wl_pointer* pointer,
                                 uint32_t state) {
     auto* ctx = static_cast<WaylandContext*>(data);
     (void)pointer;
-    (void)serial;
     (void)time;
-    (void)ctx;
+
+    // Capture the valid user input serial for actions like clipboard selection
+    if (ctx) {
+        ctx->lastPointerButtonSerial = serial;
+    }
 
     if (!sPointerTargetWindow) return;
 

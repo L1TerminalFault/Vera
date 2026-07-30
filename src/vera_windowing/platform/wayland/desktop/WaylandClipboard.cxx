@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <cstring>
+#include <iostream>
 #include <string>
 
 static std::string gClipboardDataStore = "";
@@ -94,6 +95,7 @@ std::string getClipboardTextWayland(WaylandContext& ctx) {
 
 void setClipboardTextWayland(WaylandContext& ctx, const std::string& text) {
     if (!ctx.dataDeviceManager || !ctx.dataDevice) {
+        std::cout << "something was still undefined" << std::endl;
         return;
     }
 
@@ -113,6 +115,8 @@ void setClipboardTextWayland(WaylandContext& ctx, const std::string& text) {
 
     wl_data_device_set_selection(ctx.dataDevice, source,
                                  ctx.lastPointerButtonSerial);
+
+    wl_display_flush(ctx.display);
 }
 
 bool hasClipboardTextWayland(const WaylandContext& ctx) {
