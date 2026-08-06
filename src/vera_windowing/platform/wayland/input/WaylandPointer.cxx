@@ -80,6 +80,11 @@ static void pointerHandleButton(void* data, wl_pointer* pointer,
     (void)pointer;
     (void)time;
 
+    // Capture the valid user input serial for actions like clipboard selection
+    if (ctx) {
+        ctx->lastPointerButtonSerial = serial;
+    }
+
     if (!sPointerTargetWindow) return;
 
     // Optional but recommended: Update pointer token on structural button

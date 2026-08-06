@@ -58,12 +58,21 @@ std::vector<VeraMonitorInfo> queryMonitorsX11(X11Context& ctx) {
 
     float dpiScale = queryDpiScaleX11(ctx);
 
+    static const char* sfallbackNames[] = {
+        "monitor-0", "monitor-1", "monitor-2", "monitor-3",
+        "monitor-4", "monitor-5", "monitor-6", "monitor-7"};
+
     for (int i = 0; i < monitorCount; ++i) {
         const XRRMonitorInfo& m = monitors[i];
         char* atomName = XGetAtomName(ctx.display, m.name);
 
         VeraMonitorInfo info;
-        info.name = atomName ? atomName : ("monitor-" + std::to_string(i));
+        if (atomName) {
+            info.name = atomName;
+
+        } else {
+            info.name = (i < 8) ? sfallbackNames[i] : "monitor-generic";
+        }
         info.x = m.x;
         info.y = m.y;
         info.workAreaX = workW > 0 ? static_cast<int32_t>(workX) : m.x;

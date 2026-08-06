@@ -190,7 +190,7 @@ std::vector<VeraDisplayModeInfo> X11Backend::getSupportedDisplayModes(
 
 bool X11Backend::supportsNativeDecorationHitTesting() const { return false; }
 
-std::string X11Backend::getClipboardText() const {
+VeraStringView X11Backend::getClipboardText() const {
     return getClipboardTextX11(m_ctx);
 }
 void X11Backend::setClipboardText(const std::string& text) {

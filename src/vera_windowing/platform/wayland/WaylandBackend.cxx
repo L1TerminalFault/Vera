@@ -87,6 +87,21 @@ static void registryHandleGlobal(void* data, wl_registry* registry,
             static_cast<zwp_relative_pointer_manager_v1*>(wl_registry_bind(
                 registry, name, &zwp_relative_pointer_manager_v1_interface, 1));
     }
+
+    if (std::strcmp(interface, wl_seat_interface.name) == 0) {
+        ctx->seat = static_cast<wl_seat*>(wl_registry_bind(
+            registry, name, &wl_seat_interface, /*version=*/7));
+    } else if (std::strcmp(interface, wl_data_device_manager_interface.name) ==
+               0) {
+        ctx->dataDeviceManager = static_cast<wl_data_device_manager*>(
+            wl_registry_bind(registry, name, &wl_data_device_manager_interface,
+                             /*version=*/3));
+    }
+
+    if (ctx->dataDeviceManager && ctx->seat && !ctx->dataDevice) {
+        ctx->dataDevice = wl_data_device_manager_get_data_device(
+            ctx->dataDeviceManager, ctx->seat);
+    }
 }
 
 static void registryHandleGlobalRemove(void* data, wl_registry* registry,
@@ -182,9 +197,8 @@ WaylandBackend::createWindow(const VeraWindowInfo& info) {
         auto window = std::make_unique<WaylandWindow>(m_ctx, handle, info);
         return window;
     } catch (const std::exception& e) {
-        return std::unexpected(VeraError{
-            VeraErrorType::WindowCreationFailed,
-            std::string("Failed to create Wayland window: ") + e.what()});
+        return std::unexpected(VeraError{VeraErrorType::WindowCreationFailed,
+                                         "Failed to create Wayland window"});
     }
 }
 
@@ -257,7 +271,7 @@ std::vector<VeraDisplayModeInfo> WaylandBackend::getSupportedDisplayModes(
 
 bool WaylandBackend::supportsNativeDecorationHitTesting() const { return true; }
 
-std::string WaylandBackend::getClipboardText() const {
+VeraStringView WaylandBackend::getClipboardText() const {
     return getClipboardTextWayland(m_ctx);
 }
 

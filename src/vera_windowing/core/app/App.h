@@ -1,10 +1,6 @@
 #pragma once
 
 #include <expected>
-#include <functional>
-#include <memory>
-#include <string>
-#include <vector>
 
 #include "Types.h"
 
@@ -45,7 +41,7 @@ class VeraApp {
 
     bool supportsNativeDecorationHitTesting() const;
 
-    std::string getClipboardText() const;
+    VeraStringView getClipboardText() const;
     void setClipboardText(const std::string& text);
     bool hasClipboardText() const;
 

@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <sstream>
+#include <vector>
 
 #include "core/app/Types.h"
 
@@ -36,14 +37,14 @@ void handleClientMessage(X11Context& ctx, VeraWindow* window,
 
     if (event.message_type == ctx.atoms.xdndEnter) {
         gSourceWindow = static_cast<Window>(event.data.l[0]);
-        gCallback(VeraDragEvent{VeraDragAction::Enter, window, 0, 0, {}});
+        gCallback(VeraDragEvent{VeraDragAction::Enter, window, 0, 0, {}, 0});
     } else if (event.message_type == ctx.atoms.xdndPosition) {
         int32_t rootX = static_cast<int32_t>(event.data.l[2]) >> 16;
         int32_t rootY = static_cast<int32_t>(event.data.l[2]) & 0xFFFF;
         gPendingX = rootX;
         gPendingY = rootY;
         bool accept = gCallback(
-            VeraDragEvent{VeraDragAction::Over, window, rootX, rootY, {}});
+            VeraDragEvent{VeraDragAction::Over, window, rootX, rootY, {}, 0});
 
         XClientMessageEvent status{};
         status.type = ClientMessage;
@@ -64,7 +65,7 @@ void handleClientMessage(X11Context& ctx, VeraWindow* window,
                           ctx.atoms.textUriList, ctx.atoms.xdndSelection,
                           target, event.data.l[2] /* timestamp */);
     } else if (event.message_type == ctx.atoms.xdndLeave) {
-        gCallback(VeraDragEvent{VeraDragAction::Leave, window, 0, 0, {}});
+        gCallback(VeraDragEvent{VeraDragAction::Leave, window, 0, 0, {}, 0});
     }
 }
 
@@ -85,8 +86,20 @@ void handleSelectionNotify(X11Context& ctx, VeraWindow* window,
         std::string uriList(reinterpret_cast<char*>(data), itemCount);
         XFree(data);
 
-        VeraDragEvent dropEvent{VeraDragAction::Drop, window, gPendingX,
-                                gPendingY, parseUriList(uriList)};
+        std::vector<std::string> localPaths = parseUriList(uriList);
+        std::vector<VeraStringView> paths;
+        paths.reserve(localPaths.size());
+        for (const auto& path : localPaths) {
+            paths.push_back({.data = path.data(), .length = path.length()});
+        }
+        VeraDragEvent dropEvent{
+            VeraDragAction::Drop,
+            window,
+            gPendingX,
+            gPendingY,
+            paths.data(),
+            static_cast<uint32_t>(paths.size()),
+        };
         gCallback(dropEvent);
     }
 

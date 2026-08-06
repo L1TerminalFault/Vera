@@ -53,7 +53,7 @@ X11Window::X11Window(X11Context& ctx, Window xid, VeraWindowHandle handle,
     setPidX11(ctx, xid);
     if (!info.decorated) setDecoratedX11(ctx, xid, false);
     if (info.alwaysOnTop) setAlwaysOnTopX11(ctx, xid, true);
-    if (!info.iconPath.empty()) setIconX11(ctx, xid, info.iconPath);
+    if (info.iconPath) setIconX11(ctx, xid, info.iconPath);
 
     // XDND: advertise that we accept drops (version 5).
     Atom xdndVersion = 5;
@@ -141,7 +141,7 @@ void X11Window::focus() {
     XSetInputFocus(m_ctx.display, m_xid, RevertToParent, CurrentTime);
     XRaiseWindow(m_ctx.display, m_xid);
 }
-void X11Window::setTitle(const std::string& title) {
+void X11Window::setTitle(const char* title) {
     setTitleX11(m_ctx, m_xid, title);
 }
 void X11Window::setFullscreen(FullScreenMode mode) {
@@ -151,7 +151,7 @@ void X11Window::setFullscreen(FullScreenMode mode) {
 void X11Window::setAlwaysOnTop(bool value) {
     setAlwaysOnTopX11(m_ctx, m_xid, value);
 }
-void X11Window::setIcon(const std::string& iconPath) {
+void X11Window::setIcon(const char* iconPath) {
     setIconX11(m_ctx, m_xid, iconPath);
 }
 

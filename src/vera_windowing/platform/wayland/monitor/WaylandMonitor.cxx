@@ -10,7 +10,7 @@ std::vector<VeraMonitorInfo> getMonitorsWayland(const WaylandContext& ctx) {
 
     for (const auto& out : ctx.outputs) {
         VeraMonitorInfo info{};
-        info.name = out.name.empty() ? "Generic Wayland Display" : out.name;
+        info.name = !out.name ? "Generic Wayland Display" : out.name;
 
         info.x = out.x;
         info.y = out.y;

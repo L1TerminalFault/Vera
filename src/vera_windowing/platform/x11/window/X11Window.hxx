@@ -34,10 +34,10 @@ class X11Window : public VeraWindow {
     bool isRunning() { return m_isRunnig; }
 
     void focus() override;
-    void setTitle(const std::string& title) override;
+    void setTitle(const char* title) override;
     void setFullscreen(FullScreenMode mode) override;
     void setAlwaysOnTop(bool value) override;
-    void setIcon(const std::string& iconPath) override;
+    void setIcon(const char* iconPath) override;
 
     void setTitlebarHitTestRegions(const VeraHitTestRegions& regions) override;
 

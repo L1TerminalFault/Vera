@@ -23,8 +23,8 @@ class WaylandWindow;
 struct WaylandOutputInfo {
     wl_output* output = nullptr;
     uint32_t globalId = 0;
-    std::string name;
-    std::string model;
+    const char* name;
+    const char* model;
     int32_t x = 0;
     int32_t y = 0;
     int32_t widthMm = 0;

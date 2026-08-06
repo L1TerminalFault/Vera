@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "core/app/Types.h"
 #include "platform/wayland/internal/protocols/xdg-shell-client-protocol.h"
 
 static VeraDragCallback gDragCallback = nullptr;
@@ -121,10 +122,19 @@ static void handleDragDrop(void* data, wl_data_device* device) {
     }
     close(fds[0]);
 
-    std::vector<std::string> paths = parseUriList(rawPayload);
-    if (!paths.empty()) {
+    std::vector<std::string> localPaths = parseUriList(rawPayload);
+
+    if (!localPaths.empty()) {
+        std::vector<VeraStringView> viewArray;
+        viewArray.reserve(localPaths.size());
+
+        for (const auto& path : localPaths) {
+            viewArray.push_back({.data = path.data(), .length = path.length()});
+        }
+
         VeraDragEvent event{};
-        event.paths = std::move(paths);
+        event.paths = viewArray.data();
+        event.pathCount = static_cast<uint32_t>(viewArray.size());
         event.x = gLastDragX;
         event.y = gLastDragY;
 
