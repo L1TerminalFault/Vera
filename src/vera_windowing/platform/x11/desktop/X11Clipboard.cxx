@@ -7,6 +7,8 @@
 
 #include <string>
 
+#include "core/app/Types.h"
+
 static std::string gOwnedText;
 static bool gOwningSelection = false;
 
@@ -22,12 +24,12 @@ void setClipboardTextX11(X11Context& ctx, const std::string& text) {
                        ctx.clipboardOwnerWindow, CurrentTime);
 }
 
-std::string getClipboardTextX11(X11Context& ctx) {
+VeraStringView getClipboardTextX11(X11Context& ctx) {
     Window owner = XGetSelectionOwner(ctx.display, ctx.atoms.clipboard);
     if (owner == None) return {};
 
     if (owner == ctx.clipboardOwnerWindow) {
-        return gOwnedText;
+        return {.data = gOwnedText.data(), .length = gOwnedText.length()};
     }
 
     Atom property = XInternAtom(ctx.display, "VERA_CLIPBOARD_TRANSFER", False);
@@ -51,16 +53,15 @@ std::string getClipboardTextX11(X11Context& ctx) {
     int actualFormat;
     ulong itemCount, bytesAfter;
     unsigned char* data = nullptr;
-    std::string result;
     if (XGetWindowProperty(ctx.display, ctx.clipboardOwnerWindow, property, 0,
                            1 << 20, True, AnyPropertyType, &actualType,
                            &actualFormat, &itemCount, &bytesAfter,
                            &data) == Success &&
         data) {
-        result.assign(reinterpret_cast<char*>(data), itemCount);
+        gOwnedText.assign(reinterpret_cast<char*>(data), itemCount);
         XFree(data);
     }
-    return result;
+    return {.data = gOwnedText.data(), .length = gOwnedText.length()};
 }
 
 bool hasClipboardTextX11(X11Context& ctx) {

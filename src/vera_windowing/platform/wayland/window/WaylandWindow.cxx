@@ -149,15 +149,6 @@ void WaylandWindow::initSurface(const VeraWindowInfo& info) {
     // Defensively resolve the monitor scale factor
     auto monitorInfo = getPrimaryMonitorWayland(m_ctx);
 
-    // wl_surface_set_buffer_scale only accepts INTEGERS. For fractional
-    // scales (e.g. 1.333333 = 4/3), we must round UP, not truncate —
-    // truncating silently drops the fractional part and causes the
-    // compositor to upscale our already-rendered frame, producing a
-    // double-antialiased/blurry result. Rounding up means we render at a
-    // higher resolution than strictly necessary and let the compositor
-    // scale DOWN slightly, which preserves sharpness (downscaling from a
-    // higher-res buffer looks fine; upscaling from a lower-res buffer does
-    // not).
     int32_t scale = static_cast<int32_t>(std::ceil(monitorInfo.dpiScale));
 
     // STRICT GUARD: Wayland protocol will instantly crash if scale < 1
@@ -177,7 +168,7 @@ void WaylandWindow::initSurface(const VeraWindowInfo& info) {
     if (!m_xdgToplevel) return;
     xdg_toplevel_add_listener(m_xdgToplevel, &KXDG_TOP_LEVEL_LISTENER, this);
 
-    xdg_toplevel_set_title(m_xdgToplevel, info.title.c_str());
+    xdg_toplevel_set_title(m_xdgToplevel, info.title);
     xdg_toplevel_set_app_id(m_xdgToplevel, "VeraEngine");
 
     m_decoration = createDecorationWayland(m_ctx, m_xdgToplevel);
@@ -323,9 +314,9 @@ void WaylandWindow::handleWmCloseRequest() {
 
 void WaylandWindow::focus() {}
 
-void WaylandWindow::setTitle(const std::string& title) {
+void WaylandWindow::setTitle(const char* title) {
     if (m_xdgToplevel) {
-        xdg_toplevel_set_title(m_xdgToplevel, title.c_str());
+        xdg_toplevel_set_title(m_xdgToplevel, title);
     }
 }
 
@@ -345,7 +336,7 @@ void WaylandWindow::setFullscreen(FullScreenMode mode) {
 
 void WaylandWindow::setAlwaysOnTop(bool value) { (void)value; }
 
-void WaylandWindow::setIcon(const std::string& iconPath) { (void)iconPath; }
+void WaylandWindow::setIcon(const char* iconPath) { (void)iconPath; }
 
 void WaylandWindow::setTitlebarHitTestRegions(
     const VeraHitTestRegions& regions) {

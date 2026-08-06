@@ -5,9 +5,20 @@
 #include <functional>
 #include <memory>
 #include <optional>
-#include <string>
 #include <variant>
 
+struct VeraStringView {
+    const char* data = nullptr;
+    size_t length = 0;
+
+    constexpr bool isEmpty() const noexcept {
+        return data == nullptr || length == 0;
+    }
+
+    constexpr explicit operator bool() const noexcept {
+        return data != nullptr && length > 0;
+    }
+};
 // Theme related
 enum class VeraThemeMode : uint8_t { Light = 0, Dark };
 
@@ -46,7 +57,7 @@ enum class VeraErrorType {
 
 struct VeraError {
     VeraErrorType type;
-    std::string info;
+    const char* info;
 };
 
 // Window related
@@ -92,7 +103,7 @@ struct VeraWindowInfo {
     uint32_t minWidth = 0, minHeight = 0;
     uint32_t maxWidth = 0, maxHeight = 0;
 
-    std::string title = "Vera Window";
+    const char* title = "Vera Window";
 
     bool resizable = true;
     bool decorated = true;
@@ -110,7 +121,7 @@ struct VeraWindowInfo {
     int monitorIndex = 0;
     bool centerOnMonitor = true;
     bool transparentFramebuffer = false;
-    std::string iconPath;
+    const char* iconPath = nullptr;
 };
 
 template <>
@@ -341,13 +352,13 @@ enum class VeraCursorShape : uint8_t {
 
 // Input related
 struct VeraInputDeviceInfo {
-    std::string name;
+    const char* name;
     bool connected;
 };
 
 // Monitor related
 struct VeraMonitorInfo {
-    std::string name;
+    const char* name;
     int32_t x, y;
     int32_t workAreaX, workAreaY;
     uint32_t workAreaWidth, workAreaHeight;
@@ -373,7 +384,7 @@ struct VeraNativeHandle {
 
 // Joystick related
 struct VeraJoystickState {
-    std::string name;
+    const char* name;
     bool connected = false;
     std::vector<float> axes;
     std::vector<bool> buttons;
@@ -474,10 +485,10 @@ class VeraWindow {
     virtual void close() = 0;
 
     virtual void focus() = 0;
-    virtual void setTitle(const std::string& title) = 0;
+    virtual void setTitle(const char* title) = 0;
     virtual void setFullscreen(FullScreenMode mode) = 0;
     virtual void setAlwaysOnTop(bool value) = 0;
-    virtual void setIcon(const std::string& iconPath) = 0;
+    virtual void setIcon(const char* iconPath) = 0;
 
     virtual void setTitlebarHitTestRegions(
         const VeraHitTestRegions& regions) = 0;
@@ -504,7 +515,6 @@ class VeraWindow {
     virtual void setCharCallback(
         std::function<void(uint32_t codepoint)> callback) = 0;
 
-    // FIX: What the fuck is happening
     virtual bool isPressed(VeraPressable button) const = 0;
 
     virtual void setCursorMode(VeraCursorMode mode) = 0;
@@ -541,7 +551,8 @@ struct VeraDragEvent {
     VeraDragAction action;
     VeraWindow* window;
     int32_t x, y;
-    std::vector<std::string> paths;
+    VeraStringView* paths = nullptr;
+    uint32_t pathCount;
 };
 
 using VeraDragCallback = std::function<bool(const VeraDragEvent&)>;
@@ -571,7 +582,7 @@ class IBackend {
 
     virtual bool supportsNativeDecorationHitTesting() const = 0;
 
-    virtual std::string getClipboardText() const = 0;
+    virtual VeraStringView getClipboardText() const = 0;
     virtual void setClipboardText(const std::string& text) = 0;
     virtual bool hasClipboardText() const = 0;
 

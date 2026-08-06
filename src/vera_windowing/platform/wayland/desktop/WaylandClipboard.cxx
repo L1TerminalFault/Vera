@@ -8,6 +8,8 @@
 #include <iostream>
 #include <string>
 
+#include "core/app/Types.h"
+
 static std::string gClipboardDataStore = "";
 
 static const char* kTextMimeTypes[] = {"text/plain;charset=utf-8", "text/plain",
@@ -59,16 +61,16 @@ static const wl_data_source_listener KDATA_SOURCE_LISTENER = {
 
 void initializeClipboardWayland(WaylandContext& ctx) { (void)ctx; }
 
-std::string getClipboardTextWayland(WaylandContext& ctx) {
+VeraStringView getClipboardTextWayland(WaylandContext& ctx) {
     if (!ctx.activeClipboardOffer) {
-        return "";
+        return {};
     }
 
     const char* matchedMimeType = "text/plain;charset=utf-8";
 
     int fds[2];
     if (pipe2(fds, O_CLOEXEC | O_NONBLOCK) < 0) {
-        return "";
+        return {};
     }
 
     wl_data_offer_receive(ctx.activeClipboardOffer, matchedMimeType, fds[1]);
@@ -86,11 +88,12 @@ std::string getClipboardTextWayland(WaylandContext& ctx) {
         if (bytesRead <= 0) {
             break;
         }
-        result.append(buffer, bytesRead);
+        gClipboardDataStore.append(buffer, bytesRead);
     }
 
     close(fds[0]);
-    return result;
+    return {.data = gClipboardDataStore.data(),
+            .length = gClipboardDataStore.length()};
 }
 
 void setClipboardTextWayland(WaylandContext& ctx, const std::string& text) {

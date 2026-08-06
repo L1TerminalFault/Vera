@@ -3,6 +3,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xlocale.h>
 
+#include "core/app/Types.h"
 #include "platform/x11/events/X11Events.hxx"
 #include "platform/x11/internal/X11XInput2.hxx"
 #include "platform/x11/internal/X11XKB.hxx"
@@ -189,7 +190,7 @@ std::vector<VeraDisplayModeInfo> X11Backend::getSupportedDisplayModes(
 
 bool X11Backend::supportsNativeDecorationHitTesting() const { return false; }
 
-std::string X11Backend::getClipboardText() const {
+VeraStringView X11Backend::getClipboardText() const {
     return getClipboardTextX11(m_ctx);
 }
 void X11Backend::setClipboardText(const std::string& text) {

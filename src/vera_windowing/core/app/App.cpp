@@ -1,6 +1,7 @@
 #include "core/app/App.h"
 
 #include "Backend.h"
+#include "core/app/Types.h"
 
 VeraApp::VeraApp(VeraAppInfo info) : m_appInfo(info), m_backend(create(info)) {
     if (m_backend) {
@@ -121,8 +122,11 @@ bool VeraApp::supportsNativeDecorationHitTesting() const {
     return m_backend && m_backend->supportsNativeDecorationHitTesting();
 }
 
-std::string VeraApp::getClipboardText() const {
-    return m_backend ? m_backend->getClipboardText() : std::string{};
+VeraStringView VeraApp::getClipboardText() const {
+    if (m_backend) {
+        return m_backend->getClipboardText();
+    }
+    return {};
 }
 void VeraApp::setClipboardText(const std::string& text) {
     if (m_backend) m_backend->setClipboardText(text);

@@ -154,7 +154,7 @@ int main() {
 
     std::vector<VeraWindow*> activeWindows;
     const int windowCount = 3;
-
+    std::array<std::string, windowCount> names = {};
     for (int i = 0; i < windowCount; ++i) {
         VeraWindowInfo winInfo{};
         winInfo.width = 600;
@@ -163,8 +163,9 @@ int main() {
         winInfo.centerOnMonitor = false;
         winInfo.x = 100 + (i * 100);
         winInfo.y = 100 + (i * 100);
+        names[i] = "Vera Instance #" + std::to_string(i + 1);
 
-        winInfo.title = "Vera Instance #" + std::to_string(i + 1);
+        winInfo.title = names[i].c_str();
         winInfo.customTitleBar = true;
         winInfo.titleBarHeight = 40;
 

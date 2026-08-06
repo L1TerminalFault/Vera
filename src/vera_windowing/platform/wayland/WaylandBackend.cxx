@@ -189,9 +189,8 @@ WaylandBackend::createWindow(const VeraWindowInfo& info) {
         auto window = std::make_unique<WaylandWindow>(m_ctx, handle, info);
         return window;
     } catch (const std::exception& e) {
-        return std::unexpected(VeraError{
-            VeraErrorType::WindowCreationFailed,
-            std::string("Failed to create Wayland window: ") + e.what()});
+        return std::unexpected(VeraError{VeraErrorType::WindowCreationFailed,
+                                         "Failed to create Wayland window"});
     }
 }
 
@@ -264,7 +263,7 @@ std::vector<VeraDisplayModeInfo> WaylandBackend::getSupportedDisplayModes(
 
 bool WaylandBackend::supportsNativeDecorationHitTesting() const { return true; }
 
-std::string WaylandBackend::getClipboardText() const {
+VeraStringView WaylandBackend::getClipboardText() const {
     return getClipboardTextWayland(m_ctx);
 }
 
