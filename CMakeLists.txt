@@ -12,14 +12,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # ============================================================================
 
 if(UNIX AND NOT APPLE)
-  option(VERA_ENABLE_X11 "Build X11 windowing backend" ON)
+  option(VERA_ENABLE_X11 "Build X11 windowing backend" OFF)
   option(VERA_ENABLE_WAYLAND "Build Wayland windowing backend" ON)
 
   if(NOT VERA_ENABLE_X11 AND NOT VERA_ENABLE_WAYLAND)
     message(FATAL_ERROR "At least one backend (VERA_ENABLE_X11 or VERA_ENABLE_WAYLAND) must be enabled on Linux.")
-  elseif(NOT VERA_ENABLE_X11)
+  elseif(VERA_ENABLE_X11 AND NOT VERA_ENABLE_WAYLAND)
     message(WARNING "Only X11 backend is enabled.")
-  elseif(NOT VERA_ENABLE_WAYLAND)
+  elseif(VERA_ENABLE_WAYLAND AND NOT VERA_ENABLE_X11)
     message(WARNING "Only Wayland backend is enabled.")
   elseif(VERA_ENABLE_X11 AND VERA_ENABLE_X11)
     message(NOTICE "[VERA NOTICE] Both Wayland and X11 backends are enabled")
