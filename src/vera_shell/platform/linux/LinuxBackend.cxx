@@ -1,17 +1,5 @@
 #include "LinuxBackend.h"
 
-#include "Association.h"
-#include "Badge.h"
-#include "Dialog.h"
-#include "Environment.h"
-#include "Integration.h"
-#include "Launcher.h"
-#include "Notification.h"
-#include "Power.h"
-#include "Sound.h"
-#include "Tray.h"
-#include "platform/linux/Environment.h"
-
 NotificationResult LinuxBackend::showNotification(
     const NotificationOptions& nopts) {
     return LinuxNotification::showNotification(nopts);
@@ -25,13 +13,11 @@ DialogResult LinuxBackend::showDialog(const DialogOptions& dopts) {
     return LinuxDialog::showDialog(dopts);
 }
 
-std::filesystem::path LinuxBackend::openFileDialog(
-    const FileDialogOptions& fdopts) {
+nostd::Path LinuxBackend::openFileDialog(const FileDialogOptions& fdopts) {
     return LinuxDialog::openFileDialog(fdopts);
 }
 
-std::filesystem::path LinuxBackend::saveFileDialog(
-    const SaveFileDialogOptions& sfdopts) {
+nostd::Path LinuxBackend::saveFileDialog(const SaveFileDialogOptions& sfdopts) {
     return LinuxDialog::saveFileDialog(sfdopts);
 }
 
@@ -49,7 +35,7 @@ bool LinuxBackend::setBadge(const BadgeOptions& bopts) {
     return LinuxBadge::setBadge(bopts);
 }
 
-bool LinuxBackend::clearBadge(const std::string& appId) {
+bool LinuxBackend::clearBadge(const nostd::String& appId) {
     return LinuxBadge::clearBadge(appId);
 }
 
@@ -69,11 +55,11 @@ bool LinuxBackend::registerAssociation(const FileAssociation& fassocs) {
     return LinuxAssociation::registerAssociation(fassocs);
 }
 
-bool LinuxBackend::unregisterAssociation(const std::string& assoc) {
+bool LinuxBackend::unregisterAssociation(const nostd::String& assoc) {
     return LinuxAssociation::unregisterAssociation(assoc);
 }
 
-bool LinuxBackend::isAssociationRegistered(const std::string& assoc) {
+bool LinuxBackend::isAssociationRegistered(const nostd::String& assoc) {
     return LinuxAssociation::isAssociationRegistered(assoc);
 }
 
@@ -90,7 +76,7 @@ bool LinuxBackend::allowSleep(SleepTarget sltgt) {
 }
 
 bool LinuxBackend::requestAttention(AttentionType atype,
-                                    const std::string& appId) {
+                                    const nostd::String& appId) {
     return LinuxIntegration::requestAttention(atype, appId);
 }
 
@@ -98,31 +84,31 @@ bool LinuxBackend::setProgress(const ProgressOptions& popts) {
     return LinuxIntegration::setProgress(popts);
 }
 
-bool LinuxBackend::clearProgress(const std::string& appId) {
+bool LinuxBackend::clearProgress(const nostd::String& appId) {
     return LinuxIntegration::clearProgress(appId);
 }
 
-bool LinuxBackend::setEnvironmentVariable(const std::string& name,
-                                          const std::string& value) {
+bool LinuxBackend::setEnvironmentVariable(const nostd::String& name,
+                                          const nostd::String& value) {
     return LinuxEnvironment::setEnvironmentVariable(name, value);
 }
 
-std::optional<std::string> LinuxBackend::getEnvironmentVariable(
-    const std::string& name) {
+nostd::Optional<nostd::String> LinuxBackend::getEnvironmentVariable(
+    const nostd::String& name) {
     return LinuxEnvironment::getEnvironmentVariable(name);
 }
 
-bool LinuxBackend::unsetEnvironmentVariable(const std::string& name) {
+bool LinuxBackend::unsetEnvironmentVariable(const nostd::String& name) {
     return LinuxEnvironment::unsetEnvironmentVariable(name);
 }
 
-bool LinuxBackend::addPathToEnvironment(const std::filesystem::path& pathToAdd,
+bool LinuxBackend::addPathToEnvironment(const nostd::Path& pathToAdd,
                                         bool persistent) {
     return LinuxEnvironment::addPathToEnvironment(pathToAdd, persistent);
 }
 
-bool LinuxBackend::removePathFromEnvironment(
-    const std::filesystem::path& pathToRemove, bool persistent) {
+bool LinuxBackend::removePathFromEnvironment(const nostd::Path& pathToRemove,
+                                             bool persistent) {
     return LinuxEnvironment::removePathFromEnvironment(pathToRemove,
                                                        persistent);
 }

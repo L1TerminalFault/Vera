@@ -1,11 +1,10 @@
 #pragma once
 
-#include <cstdint>
-#include <expected>
-#include <functional>
-#include <memory>
-#include <optional>
-#include <variant>
+#include "../../../shared/nostd.h"
+
+// ============================================================================
+// DATA TYPES
+// ============================================================================
 
 struct VeraStringView {
     const char* data = nullptr;
@@ -135,63 +134,35 @@ struct std::hash<VeraWindowHandle> {
 enum class VeraKey : uint16_t {
     Unknown = 0,
 
-    // Lowercase Letters
-    ALower,
-    BLower,
-    CLower,
-    DLower,
-    ELower,
-    FLower,
-    GLower,
-    HLower,
-    ILower,
-    JLower,
-    KLower,
-    LLower,
-    MLower,
-    NLower,
-    OLower,
-    PLower,
-    QLower,
-    RLower,
-    SLower,
-    TLower,
-    ULower,
-    VLower,
-    WLower,
-    XLower,
-    YLower,
-    ZLower,
+    // Ordinary Letters
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    J,
+    K,
+    L,
+    M,
+    N,
+    O,
+    P,
+    Q,
+    R,
+    S,
+    T,
+    U,
+    V,
+    W,
+    X,
+    Y,
+    Z,
 
-    // Uppercase Letters
-    AUpper,
-    BUpper,
-    CUpper,
-    DUpper,
-    EUpper,
-    FUpper,
-    GUpper,
-    HUpper,
-    IUpper,
-    JUpper,
-    KUpper,
-    LUpper,
-    MUpper,
-    NUpper,
-    OUpper,
-    PUpper,
-    QUpper,
-    RUpper,
-    SUpper,
-    TUpper,
-    UUpper,
-    VUpper,
-    WUpper,
-    XUpper,
-    YUpper,
-    ZUpper,
-
-    // Standard Numbers & Symbols (Base / Unshifted)
+    // Standard Numbers & Symbols
     Num0,
     Num1,
     Num2,
@@ -214,29 +185,6 @@ enum class VeraKey : uint16_t {
     Backslash,
     RightBracket,
     GraveAccent,
-
-    // Shifted Symbols
-    Exclamation,
-    At,
-    Hash,
-    Dollar,
-    Percent,
-    Caret,
-    Ampersand,
-    Asterisk,
-    LeftParen,
-    RightParen,
-    Underscore,
-    Plus,
-    Colon,
-    Quote,
-    LessThan,
-    GreaterThan,
-    Question,
-    LeftBrace,
-    RightBrace,
-    Pipe,
-    Tilde,
 
     // Functional & Control Keys
     Enter,
@@ -384,69 +332,69 @@ struct VeraNativeHandle {
 
 // Joystick related
 struct VeraJoystickState {
-    const char* name;
+    char name[128];
     bool connected = false;
-    std::vector<float> axes;
-    std::vector<bool> buttons;
+    nostd::Vector<float> axes;
+    nostd::Vector<bool> buttons;
 };
 
 using VeraJoystickButtonCallback =
-    std::function<void(uint32_t joyId, uint32_t btn, bool pressed)>;
+    nostd::Function<void(uint32_t joyId, uint32_t btn, bool pressed)>;
 using VeraJoystickAxisCallback =
-    std::function<void(uint32_t joyId, uint32_t axis, float val)>;
+    nostd::Function<void(uint32_t joyId, uint32_t axis, float val)>;
 
 enum class VeraJoystickButton : uint8_t {
     // Matched by same opcodes
     // Face Buttons
-    //  - PlayStation
+    // - PlayStation
     Cross,
     Circle,
     Square,
     Triangle,
-    //  - Xbox
+    // - Xbox
     XboxA,
     XboxB,
     XboxX,
     XboxY,
 
     // Bumpers
-    //  - PlayStation
+    // - PlayStation
     L1,
     R1,
-    //  - Xbox
+    // - Xbox
     XboxLB,
     XboxRB,
 
     // Triggers (Digital/Click states)
-    //  - PlayStation
+    // - PlayStation
     L2,
     R2,
-    //  - Xbox
+    // - Xbox
     XboxLT,
     XboxRT,
 
     // Stick Clicks
-    //  - PlayStation
+    // - PlayStation
     L3,
     R3,
-    //  - Xbox
+    // - Xbox
     XboxLS,
     XboxRS,
 
     // Menu and System Buttons
-    //  - PlayStation
+    // - PlayStation
     Share,
     Options,
     PS,
-    //  - Xbox
+    // - Xbox
     XboxBack,   // View
     XboxStart,  // Menu
     XboxGuide,
 
     // Platform-Specific Exclusives
-    //  - PlayStation
+    // - PlayStation
     Touchpad,  // PlayStation: Touchpad Click (Unmapped on Xbox)
-    //  - Xbox
+    // - Xbox
     XboxShare,  // Dedicated Series X|S Capture button (Unmapped on PS)
 
     // Directional D-Pad Same on both platforms
@@ -494,35 +442,37 @@ class VeraWindow {
         const VeraHitTestRegions& regions) = 0;
 
     virtual void setResizeCallback(
-        std::function<void(uint32_t width, uint32_t height)> callback) = 0;
+        nostd::Function<void(uint32_t width, uint32_t height)> callback) = 0;
     virtual void setMoveCallback(
-        std::function<void(int32_t x, int32_t y)> callback) = 0;
-    virtual void setCloseRequestCallback(std::function<bool()> callback) = 0;
+        nostd::Function<void(int32_t x, int32_t y)> callback) = 0;
+    virtual void setCloseRequestCallback(nostd::Function<bool()> callback) = 0;
     virtual void setFocusChangeCallback(
-        std::function<void(bool focused)> callback) = 0;
+        nostd::Function<void(bool focused)> callback) = 0;
     virtual void setDpiChangeCallback(
-        std::function<void(float newScale)> callback) = 0;
+        nostd::Function<void(float newScale)> callback) = 0;
 
     virtual void setKeyCallback(
-        std::function<void(VeraKey key, bool pressed, bool repeat)>
+        nostd::Function<void(VeraKey key, bool pressed, bool repeat)>
             callback) = 0;
     virtual void setMouseButtonCallback(
-        std::function<void(VeraMouseButton button, bool pressed)> callback) = 0;
+        nostd::Function<void(VeraMouseButton button, bool pressed)>
+            callback) = 0;
     virtual void setMouseMoveCallback(
-        std::function<void(double x, double y)> callback) = 0;
+        nostd::Function<void(double x, double y)> callback) = 0;
     virtual void setScrollCallback(
-        std::function<void(double xOffset, double yOffset)> callback) = 0;
+        nostd::Function<void(double xOffset, double yOffset)> callback) = 0;
     virtual void setCharCallback(
-        std::function<void(uint32_t codepoint)> callback) = 0;
+        nostd::Function<void(const char*)> callback) = 0;
 
-    virtual bool isPressed(VeraPressable button) const = 0;
+    virtual bool isPressed(const VeraPressable& button) const = 0;
 
     virtual void setCursorMode(VeraCursorMode mode) = 0;
     virtual void setCursorShape(VeraCursorShape shape) = 0;
 
     virtual VeraMonitorInfo getCurrentMonitor() const = 0;
 
-    void setDestroyedNotifier(std::function<void(VeraWindowHandle)> notifier) {
+    void setDestroyedNotifier(
+        nostd::Function<void(VeraWindowHandle)> notifier) {
         m_destroyedNotifier = std::move(notifier);
     }
 
@@ -531,7 +481,7 @@ class VeraWindow {
     virtual void setJoystickAxisCallback(VeraJoystickAxisCallback callback) = 0;
 
     virtual void setDestructionCallback(
-        std::function<void(VeraWindow*)> callback) = 0;
+        nostd::Function<void(VeraWindow*)> callback) = 0;
 
    protected:
     void notifyDestroyed() {
@@ -541,7 +491,7 @@ class VeraWindow {
     }
 
    private:
-    std::function<void(VeraWindowHandle)> m_destroyedNotifier;
+    nostd::Function<void(VeraWindowHandle)> m_destroyedNotifier;
 };
 
 // Drag related
@@ -555,42 +505,42 @@ struct VeraDragEvent {
     uint32_t pathCount;
 };
 
-using VeraDragCallback = std::function<bool(const VeraDragEvent&)>;
+using VeraDragCallback = nostd::Function<bool(const VeraDragEvent&)>;
 
 // Backend Interface
 class IBackend {
    public:
     virtual ~IBackend() = default;
 
-    virtual std::expected<std::unique_ptr<VeraWindow>, VeraError> createWindow(
-        const VeraWindowInfo& info) = 0;
+    virtual nostd::Expected<nostd::UniquePtr<VeraWindow>, VeraError>
+    createWindow(const VeraWindowInfo& info) = 0;
 
     virtual void pollEvents() = 0;
     virtual void waitEvents() = 0;
     virtual void waitEventsTimeout(double timeoutSeconds) = 0;
 
-    virtual void setQuitRequestCallback(std::function<bool()> callback) = 0;
-    virtual void setDisplayChangeCallback(std::function<void()> callback) = 0;
+    virtual void setQuitRequestCallback(nostd::Function<bool()> callback) = 0;
+    virtual void setDisplayChangeCallback(nostd::Function<void()> callback) = 0;
     virtual void setSystemThemeChangeCallback(
-        std::function<void(VeraSystemTheme)> callback) = 0;
+        nostd::Function<void(VeraSystemTheme)> callback) = 0;
 
-    virtual std::vector<VeraMonitorInfo> getMonitors() const = 0;
+    virtual nostd::Vector<VeraMonitorInfo> getMonitors() const = 0;
     virtual VeraMonitorInfo getPrimaryMonitor() const = 0;
     virtual VeraMonitorInfo getMonitorAt(int32_t x, int32_t y) const = 0;
-    virtual std::vector<VeraDisplayModeInfo> getSupportedDisplayModes(
+    virtual nostd::Vector<VeraDisplayModeInfo> getSupportedDisplayModes(
         const VeraMonitorInfo& monitor) const = 0;
 
     virtual bool supportsNativeDecorationHitTesting() const = 0;
 
     virtual VeraStringView getClipboardText() const = 0;
-    virtual void setClipboardText(const std::string& text) = 0;
+    virtual void setClipboardText(const char*) = 0;
     virtual bool hasClipboardText() const = 0;
 
     virtual void setDragCallback(VeraDragCallback callback) = 0;
 
     virtual VeraSystemTheme getSystemTheme() const = 0;
-    virtual std::vector<VeraInputDeviceInfo> getInputDevices() const = 0;
+    virtual nostd::Vector<VeraInputDeviceInfo> getInputDevices() const = 0;
     virtual VeraNativeHandle getNativeHandle() const = 0;
-    virtual void applySettings(VeraSettings) = 0;
+    virtual void applySettings(const VeraSettings&) = 0;
     virtual void setCursorShape(VeraCursorShape) = 0;
 };

@@ -1,21 +1,18 @@
 #pragma once
 
-#include <filesystem>
-#include <functional>
-#include <string>
-#include <vector>
+#include "../../shared/nostd.h"
 
 enum class NotificationUrgency { Low = 0, Normal = 1, Critical = 2 };
 
 struct NotificationOptions {
-    std::string title;
-    std::string body;
-    std::string icon;
-    std::string appName = "App";
-    std::uint32_t replacesId = 0;
+    nostd::String title;
+    nostd::String body;
+    nostd::String icon;
+    nostd::String appName = "App";
+    uint32_t replacesId = 0;
     int32_t expireTimeoutMs = -1;
     NotificationUrgency urgency = NotificationUrgency::Normal;
-    std::vector<std::pair<std::string, std::string>> actions;
+    nostd::Vector<std::pair<nostd::String, nostd::String>> actions;
 };
 
 struct NotificationResult {
@@ -24,6 +21,10 @@ struct NotificationResult {
 };
 
 using Progress = std::uint32_t;
+
+#undef Status
+#undef Success
+#undef None
 
 enum class Status {
     Success,
@@ -39,83 +40,83 @@ enum class DialogButton { Ok, Cancel, Yes, No, Custom };
 
 struct DialogResult {
     DialogButton button = DialogButton::Cancel;
-    std::string customButtonText;  // Populated if a custom button was pressed
+    nostd::String customButtonText;  // Populated if a custom button was pressed
 };
 
 struct DialogOptions {
-    std::string title;
-    std::string message;
+    nostd::String title;
+    nostd::String message;
 
     DialogIcon icon = DialogIcon::None;
 
-    std::vector<DialogButton> buttons;
+    nostd::Vector<DialogButton> buttons;
 };
 
 struct FileDialogOptions {
-    std::string title = "Open File";
-    std::filesystem::path defaultPath;
-    std::vector<std::string> filters;  // e.g., {"*.png", "*.jpg"}
+    nostd::String title = "Open File";
+    nostd::Path defaultPath;
+    nostd::Vector<nostd::String> filters;  // e.g., {"*.png", "*.jpg"}
 };
 
 struct SaveFileDialogOptions {
-    std::string title = "Save File";
-    std::filesystem::path defaultPath;
-    std::string defaultName;
-    std::vector<std::string> filters;
+    nostd::String title = "Save File";
+    nostd::Path defaultPath;
+    nostd::String defaultName;
+    nostd::Vector<nostd::String> filters;
 };
 
 struct TrayMenuItem {
-    std::string id;
-    std::string label;
+    nostd::String id;
+    nostd::String label;
     bool enabled = true;
     bool checked = false;
     bool isSeparator = false;
-    std::function<void()> onClick;
+    nostd::Function<void()> onClick;
 };
 
 struct TrayOptions {
-    std::string id = "app-tray";
-    std::string title = "Application";
-    std::string iconName = "application-x-executable";
-    std::string tooltip = "Application running";
-    std::vector<TrayMenuItem> menuItems;
+    nostd::String id = "app-tray";
+    nostd::String title = "Application";
+    nostd::String iconName = "application-x-executable";
+    nostd::String tooltip = "Application running";
+    nostd::Vector<TrayMenuItem> menuItems;
 };
 
 struct TrayUpdate {
-    std::string title;
-    std::string iconName;
-    std::string tooltip;
-    std::vector<TrayMenuItem> menuItems;
+    nostd::String title;
+    nostd::String iconName;
+    nostd::String tooltip;
+    nostd::Vector<TrayMenuItem> menuItems;
 };
 
 struct BadgeOptions {
     int count;
     bool countVisible;
-    std::string appId;
+    nostd::String appId;
 };
 
 struct UrlLaunchOptions {
-    std::string url;
+    nostd::String url;
 };
 
 struct FileLaunchOptions {
-    std::filesystem::path filePath;
+    nostd::Path filePath;
 };
 
 struct ApplicationLaunchOptions {
-    std::string appId;
-    std::string command;
-    std::vector<std::string> args;
+    nostd::String appId;
+    nostd::String command;
+    nostd::Vector<nostd::String> args;
 };
 
 struct FileAssociation {
-    std::string extension;
+    nostd::String extension;
 
-    std::string mimeType;
+    nostd::String mimeType;
 
-    std::string description;
+    nostd::String description;
 
-    std::string command;
+    nostd::String command;
 };
 
 enum class SystemSound { Notification, Warning, Error, Question, Success };
@@ -124,13 +125,13 @@ enum class SleepTarget { Screen, System, All };
 
 struct SleepRequest {
     SleepTarget target = SleepTarget::System;
-    std::string reason = "Application busy";
+    nostd::String reason = "Application busy";
 };
 
 struct ProgressOptions {
     double progress;
     bool progressVisible;
-    std::string appId;
+    nostd::String appId;
 };
 
 enum class AttentionType { Informational, Critical };
@@ -138,63 +139,35 @@ enum class AttentionType { Informational, Critical };
 class IPlatformBackend {
    public:
     virtual ~IPlatformBackend() = default;
-
     virtual NotificationResult showNotification(const NotificationOptions&) = 0;
-
     virtual bool closeNotification(std::uint32_t id) = 0;
-
     virtual DialogResult showDialog(const DialogOptions&) = 0;
-
-    virtual std::filesystem::path openFileDialog(const FileDialogOptions&) = 0;
-
-    virtual std::filesystem::path saveFileDialog(
-        const SaveFileDialogOptions&) = 0;
-
+    virtual nostd::Path openFileDialog(const FileDialogOptions&) = 0;
+    virtual nostd::Path saveFileDialog(const SaveFileDialogOptions&) = 0;
     virtual bool createTray(const TrayOptions&) = 0;
-
     virtual bool updateTray(const TrayUpdate&) = 0;
-
     virtual bool removeTray() = 0;
-
     virtual bool setBadge(const BadgeOptions&) = 0;
-
-    virtual bool clearBadge(const std::string&) = 0;
-
+    virtual bool clearBadge(const nostd::String&) = 0;
     virtual bool openUrl(const UrlLaunchOptions&) = 0;
-
     virtual bool openFile(const FileLaunchOptions&) = 0;
-
     virtual bool openApplication(const ApplicationLaunchOptions&) = 0;
-
     virtual bool registerAssociation(const FileAssociation&) = 0;
-
-    virtual bool unregisterAssociation(const std::string&) = 0;
-
-    virtual bool isAssociationRegistered(const std::string&) = 0;
-
+    virtual bool unregisterAssociation(const nostd::String&) = 0;
+    virtual bool isAssociationRegistered(const nostd::String&) = 0;
     virtual bool playSound(SystemSound) = 0;
-
     virtual bool preventSleep(const SleepRequest&) = 0;
-
     virtual bool allowSleep(SleepTarget) = 0;
-
-    virtual bool requestAttention(AttentionType, const std::string&) = 0;
-
+    virtual bool requestAttention(AttentionType, const nostd::String&) = 0;
     virtual bool setProgress(const ProgressOptions&) = 0;
-
-    virtual bool clearProgress(const std::string&) = 0;
-
-    virtual bool setEnvironmentVariable(const std::string& name,
-                                        const std::string& value) = 0;
-
-    virtual std::optional<std::string> getEnvironmentVariable(
-        const std::string& name) = 0;
-
-    virtual bool unsetEnvironmentVariable(const std::string& name) = 0;
-
-    virtual bool addPathToEnvironment(const std::filesystem::path& pathToAdd,
+    virtual bool clearProgress(const nostd::String&) = 0;
+    virtual bool setEnvironmentVariable(const nostd::String& name,
+                                        const nostd::String& value) = 0;
+    virtual nostd::Optional<nostd::String> getEnvironmentVariable(
+        const nostd::String& name) = 0;
+    virtual bool unsetEnvironmentVariable(const nostd::String& name) = 0;
+    virtual bool addPathToEnvironment(const nostd::Path& pathToAdd,
                                       bool persistent) = 0;
-
-    virtual bool removePathFromEnvironment(
-        const std::filesystem::path& pathToRemove, bool persistent) = 0;
+    virtual bool removePathFromEnvironment(const nostd::Path& pathToRemove,
+                                           bool persistent) = 0;
 };

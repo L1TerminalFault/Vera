@@ -27,7 +27,7 @@ class Win32Backend : public IBackend {
 
     bool supportsNativeDecorationHitTesting() const override;
 
-    std::string getClipboardText() const override;
+    VeraStringView getClipboardText() const override;
     void setClipboardText(const std::string& text) override;
     bool hasClipboardText() const override;
 

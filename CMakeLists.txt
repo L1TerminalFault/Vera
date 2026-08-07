@@ -11,13 +11,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # 1. Gather all source files for vera_windowing
 # ============================================================================
 
-file(GLOB_RECURSE VERA_WINDOWING_SOURCES
-    CONFIGURE_DEPENDS
-    "src/vera_windowing/core/*.cpp"
-    "src/vera_windowing/core/*.cxx"
-    "src/vera_windowing/core/*.h"
-    "src/vera_windowing/core/*.hpp"
-)
+# file(GLOB_RECURSE VERA_WINDOWING_SOURCES
+#     CONFIGURE_DEPENDS
+#     "src/vera_windowing/core/*.cpp"
+#     "src/vera_windowing/core/*.cxx"
+#     "src/vera_windowing/core/*.h"
+#     "src/vera_windowing/core/*.hpp"
+# )
 
 if(WIN32)
   file(GLOB_RECURSE WIN32_WINDOWING_SOURCES
@@ -32,14 +32,8 @@ if(WIN32)
 elseif(UNIX AND NOT APPLE)
   file(GLOB_RECURSE LINUX_WINDOWING_SOURCES
         CONFIGURE_DEPENDS
-        "src/vera_windowing/platform/x11/*.cpp"
-        "src/vera_windowing/platform/x11/*.cxx"
-        "src/vera_windowing/platform/x11/*.h"
-        "src/vera_windowing/platform/x11/*.hpp"
-        "src/vera_windowing/platform/wayland/*.cpp"
-        "src/vera_windowing/platform/wayland/*.cxx"
-        "src/vera_windowing/platform/wayland/*.h"
-        "src/vera_windowing/platform/wayland/*.hpp"
+        "src/vera_windowing/platform/x11/X11Backend.cxx"
+        "src/vera_windowing/platform/wayland/WaylandBackend.cxx"
     )
   list(APPEND VERA_WINDOWING_SOURCES ${LINUX_WINDOWING_SOURCES})
 
@@ -79,32 +73,32 @@ elseif(UNIX AND NOT APPLE)
 
   pkg_get_variable(WAYLAND_PROTOCOLS_DIR wayland-protocols pkgdatadir)
 
-  set(XDG_SHELL_XML "${WAYLAND_PROTOCOLS_DIR}/stable/xdg-shell/xdg-shell.xml")
-  set(XDG_DECORATION_XML "${WAYLAND_PROTOCOLS_DIR}/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml")
-  set(POINTER_CONSTRAINTS_XML "${WAYLAND_PROTOCOLS_DIR}/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml")
-  set(RELATIVE_POINTER_XML "${WAYLAND_PROTOCOLS_DIR}/unstable/relative-pointer/relative-pointer-unstable-v1.xml")
-  set(XDG_OUTPUT_XML "${WAYLAND_PROTOCOLS_DIR}/unstable/xdg-output/xdg-output-unstable-v1.xml")
+  # set(XDG_SHELL_XML "${WAYLAND_PROTOCOLS_DIR}/stable/xdg-shell/xdg-shell.xml")
+  # set(XDG_DECORATION_XML "${WAYLAND_PROTOCOLS_DIR}/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml")
+  # set(POINTER_CONSTRAINTS_XML "${WAYLAND_PROTOCOLS_DIR}/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml")
+  # set(RELATIVE_POINTER_XML "${WAYLAND_PROTOCOLS_DIR}/unstable/relative-pointer/relative-pointer-unstable-v1.xml")
+  # set(XDG_OUTPUT_XML "${WAYLAND_PROTOCOLS_DIR}/unstable/xdg-output/xdg-output-unstable-v1.xml")
 
-  set(GENERATED_PROTOCOL_SOURCES)
-  wayland_generate_protocol("${XDG_SHELL_XML}" GENERATED_PROTOCOL_SOURCES)
-  wayland_generate_protocol("${XDG_DECORATION_XML}" GENERATED_PROTOCOL_SOURCES)
-  wayland_generate_protocol("${POINTER_CONSTRAINTS_XML}" GENERATED_PROTOCOL_SOURCES)
-  wayland_generate_protocol("${RELATIVE_POINTER_XML}" GENERATED_PROTOCOL_SOURCES)
-  wayland_generate_protocol("${XDG_OUTPUT_XML}" GENERATED_PROTOCOL_SOURCES)
-  list(APPEND VERA_WINDOWING_SOURCES ${GENERATED_PROTOCOL_SOURCES})
+  # set(GENERATED_PROTOCOL_SOURCES)
+  # wayland_generate_protocol("${XDG_SHELL_XML}" GENERATED_PROTOCOL_SOURCES)
+  # wayland_generate_protocol("${XDG_DECORATION_XML}" GENERATED_PROTOCOL_SOURCES)
+  # wayland_generate_protocol("${POINTER_CONSTRAINTS_XML}" GENERATED_PROTOCOL_SOURCES)
+  # wayland_generate_protocol("${RELATIVE_POINTER_XML}" GENERATED_PROTOCOL_SOURCES)
+  # wayland_generate_protocol("${XDG_OUTPUT_XML}" GENERATED_PROTOCOL_SOURCES)
+  # list(APPEND VERA_WINDOWING_SOURCES ${GENERATED_PROTOCOL_SOURCES})
 endif()
 
 # ============================================================================
 # 2. Gather all source files for vera_shell
 # ============================================================================
 
-file(GLOB_RECURSE VERA_SHELL_SOURCES
-    CONFIGURE_DEPENDS
-    "src/vera_shell/core_shell/*.cpp"
-    "src/vera_shell/core_shell/*.cxx"
-    "src/vera_shell/core_shell/*.h"
-    "src/vera_shell/core_shell/*.hpp"
-)
+# file(GLOB_RECURSE VERA_SHELL_SOURCES
+#     CONFIGURE_DEPENDS
+#     "src/vera_shell/core_shell/*.cpp"
+#     "src/vera_shell/core_shell/*.cxx"
+#     "src/vera_shell/core_shell/*.h"
+#     "src/vera_shell/core_shell/*.hpp"
+# )
 
 if(WIN32)
   file(GLOB_RECURSE WIN32_SHELL_SOURCES
@@ -119,10 +113,7 @@ if(WIN32)
 elseif(UNIX AND NOT APPLE)
   file(GLOB_RECURSE LINUX_SHELL_SOURCES
         CONFIGURE_DEPENDS
-        "src/vera_shell/platform/linux/*.cpp"
-        "src/vera_shell/platform/linux/*.cxx"
-        "src/vera_shell/platform/linux/*.h"
-        "src/vera_shell/platform/linux/*.hpp"
+        "src/vera_shell/platform/linux/LinuxBackend.cxx"
     )
   list(APPEND VERA_SHELL_SOURCES ${LINUX_SHELL_SOURCES})
 
