@@ -206,9 +206,14 @@ endif()
 # 5. Create example executable
 # ============================================================================
 
-add_executable(vera_example example/basic.cpp)
+add_executable(vera_basic_example example/basic.cpp)
+add_executable(vera_advanced_example example/advanced.cpp)
 
-target_link_libraries(vera_example PUBLIC
+target_link_libraries(vera_advanced_example PUBLIC
     vera_windowing
     vera_shell
+)
+
+target_link_libraries(vera_basic_example PUBLIC
+    vera_windowing
 )
